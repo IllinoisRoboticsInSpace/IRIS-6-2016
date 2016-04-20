@@ -298,10 +298,6 @@ void FreeSixIMU::getAngles(float * angles) {
 
 }
 
-
-
-
-
 void FreeSixIMU::getYawPitchRoll(float * ypr) {
   float q[4]; // quaternion
   float gx, gy, gz; // estimated gravity direction

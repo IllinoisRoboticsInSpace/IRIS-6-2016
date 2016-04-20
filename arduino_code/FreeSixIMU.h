@@ -24,14 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wire.h>
 #include "Arduino.h"
 
-#include "FIMU_ADXL345.h"
-#define FIMU_ACC_ADDR ADXL345_ADDR_ALT_LOW // SDO connected to GND
-#include "FIMU_ITG3200.h"
-
-
 #ifndef FreeSixIMU_h
 #define FreeSixIMU_h
 
+#include "FIMU_ADXL345.h"
+#define FIMU_ACC_ADDR ADXL345_ADDR_ALT_LOW // SDO connected to GND
+#include "FIMU_ITG3200.h"
 
 #define FIMU_BMA180_DEF_ADDR BMA180_ADDRESS_SDO_LOW
 #define FIMU_ITG3200_DEF_ADDR ITG3200_ADDR_AD0_LOW // AD0 connected to GND
