@@ -170,7 +170,7 @@ void* thread_depth(void* arg)
     //ros::Publisher publisher = nodeHandle.advertise<sensor_msgs::PointCloud2>(topicName, bufferSize);
 
     // SERIAL INITIALIZATION
-    while(not threads_stop)
+    while(0) //not threads_stop)
     {
         try
         {
