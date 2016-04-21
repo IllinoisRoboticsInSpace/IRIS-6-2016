@@ -447,7 +447,7 @@ int main(int argc, char **argv)
     sigaction(SIGINT, &sigIntHandler, NULL);
 
     //ROS init
-    ros::init(argc, argv, "IRIS Navigation and planning");
+    ros::init(argc, argv, "IRIS_Navigation_and_planning");
 
 
     argc2 = argc;
