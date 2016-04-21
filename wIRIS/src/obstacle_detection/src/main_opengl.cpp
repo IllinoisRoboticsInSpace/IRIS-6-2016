@@ -28,7 +28,6 @@ using namespace std;
 #include <GL/glu.h>*/
 // SERIAL
 #include <serial/serial.h>
-
 #include "checkboard_navigation_module.h"
 #include "debug_ip_server.h"
 
