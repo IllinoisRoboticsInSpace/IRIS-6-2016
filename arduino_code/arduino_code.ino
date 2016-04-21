@@ -53,7 +53,7 @@ void setup()
     Wire.begin();
 
     //Initialize IMU
-    imu.init();  
+    //imu.init();  
 
     Serial.println("Ready");
 }
@@ -81,6 +81,7 @@ void loop()
         // Check we got good data
         data = str.endsWith("#");
     }
+    
 
     if(data)
     {
@@ -166,27 +167,28 @@ void loop()
             collect_rotating.stop();
         }
         data = false;
-    }
 
-    //Update the robot status
-    //Format: "x, y, theta, x_error, y_error, theta_error, v_x, v_theta, disp_act, turbine_act, maxon"
-    imu.getEuler(pose); //Get IMU data //fills pose[0] pose[1] pose[2]
-    pose[3] = 0; //servo_current;
-    pose[4] = 0; //servo_destination;
-    pose[5] = 0;
-    pose[6] = 0;
-    pose[7] = str[commaIdx[3]-1];
-    pose[8] = str[commaIdx[2]-1];
-    pose[9] = str[str.length()-2];
 
-    //Create the string to send
-    String status_str;
-    for(int i=0;i<10;i++)
-    {
-      status_str += i?",":"";
-      status_str += String(pose[0]);
+        //Update the robot status
+        //Format: "x, y, theta, x_error, y_error, theta_error, v_x, v_theta, disp_act, turbine_act, maxon"
+        //imu.getEuler(pose); //Get IMU data //fills pose[0] pose[1] pose[2]
+        pose[3] = 0; //servo_current;
+        pose[4] = 0; //servo_destination;
+        pose[5] = 0;
+        pose[6] = 0;
+        pose[7] = str[commaIdx[3]-1];
+        pose[8] = str[commaIdx[2]-1];
+        pose[9] = str[str.length()-2];
+    
+        //Create the string to send
+        String status_str;
+        for(int i=0;i<10;i++)
+        {
+          status_str += i?",":"";
+          status_str += String(pose[0]);
+        }
+        status_str += "#!\n";
+        Serial.write(status_str.c_str(), status_str.length());
+        Serial.flush();
     }
-    status_str += "#!";
-    Serial.write(status_str.c_str(), status_str.length());
-    Serial.flush();
 }

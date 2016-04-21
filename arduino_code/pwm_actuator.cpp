@@ -48,11 +48,11 @@ void pwm_actuator::stop()
 String roboteq_string(String speed_r, String speed_l)
 {
   //build string string
-  String out = "!g 1 ";
+  String out = "!G 1 ";
     out += speed_r;
     out += "_";
-    out += "!g 2 ";
+    out += "!G 2 ";
   out += speed_l;
-    out += "_";
+    out += "_\n";
   return out;
 }
