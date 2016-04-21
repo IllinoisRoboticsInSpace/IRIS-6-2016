@@ -359,14 +359,18 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                         };
                     float a=0;
                     float b=0;
+                    float c=0;
                     float& w = s.squareSize;
                     float& d = s.depth;
                     for(int ii=0;ii<16;ii++)
                         a+=pointBuf[Alist[ii][0]].x-pointBuf[Alist[ii][1]].x;
                     for(int ii=0;ii<12;ii++)
                         b+=pointBuf[Blist[ii][0]].x-pointBuf[Blist[ii][1]].x;
+                    for(int ii=0;ii<12;ii++)
+                        c+=pointBuf[Blist[ii][0]].x;
                     a/=16;
                     b/=12;
+                    c/=12;
                     if (a<0)
                     {
                         a=-a;
@@ -393,7 +397,7 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     while(webcam_angle<0)webcam_angle+=360;
                     while(webcam_angle>360)webcam_angle-=360;
                     std_msgs::Float32 msg;
-                    msg.data=webcam_angle
+                    msg.data=webcam_angle;
                     pub.publish(msg);
 
                     cout << "webcam nav x " << x << " y " << y << " th " << webcam_angle << endl;

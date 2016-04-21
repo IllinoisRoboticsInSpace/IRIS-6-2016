@@ -219,7 +219,7 @@ void *connection_handler(void * pointer)
                 "Accept-Ranges: none\r\n"
                 "Content-Length: ";
         write(sock , message , strlen(message));
-        sprintf(buffer,"%d",strlen(html));
+        sprintf(buffer,"%d",(int)strlen(html));
         write(sock , buffer , strlen(buffer));
         message = "\r\n"
                 "Keep-Alive: Off\r\n"
