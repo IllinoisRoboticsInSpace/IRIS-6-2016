@@ -10,7 +10,8 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "checkboard_navigation_module.h"
-
+#include <ros/ros.h>
+#include <std_msgs/Float32.h>
 
 #ifndef _CRT_SECURE_NO_WARNINGS
 # define _CRT_SECURE_NO_WARNINGS
@@ -241,6 +242,9 @@ chesspos get_chessboard_navigation_pos()
 
 int init_chessboard_navigation(const string inputSettingsFile, volatile bool * stop_flag )
 {
+    ros::NodeHandle n("chessboard_navigation");
+    ros::Publisher pub = n.advertise<std_msgs::Float32>("/IRIS/webcam_angle", 1);
+    float webcam_angle=0;
     pos_chesspos.x=0;
     pos_chesspos.y=0;
     pos_chesspos.time=0;
@@ -382,7 +386,17 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     float x=w/2+dy*dperp;
                     float y=d/2-dx*dperp;
                     //cout << "dx " << dx << " dy " << dy << endl;
-                    cout << "webcam nav x " << x << " y " << y << endl;
+                    
+                    //rotate webcam!
+                    float delta=(c-view.cols/2)*12/view.cols;
+                    if(abs(delta)>1)webcam_angle+=delta;
+                    while(webcam_angle<0)webcam_angle+=360;
+                    while(webcam_angle>360)webcam_angle-=360;
+                    std_msgs::Float32 msg;
+                    msg.data=webcam_angle
+                    pub.publish(msg);
+
+                    cout << "webcam nav x " << x << " y " << y << " th " << webcam_angle << endl;
                     
                     while(lock);
                     lock=1;

@@ -167,7 +167,6 @@ void* thread_depth(void* arg)
 {
     /**ROS**/
     int bufferSize = 20;//size of buffer, if messages accumulate, start throwing away after this many pile up
-    //ros::init(argc2, argv2, myNodeName);
     //ros::NodeHandle nodeHandle;
     //ros::Publisher publisher = nodeHandle.advertise<sensor_msgs::PointCloud2>(topicName, bufferSize);
 
@@ -448,6 +447,8 @@ int main(int argc, char **argv)
     sigIntHandler.sa_flags = 0;
     sigaction(SIGINT, &sigIntHandler, NULL);
 
+    //ROS init
+    ros::init(argc, argv, "IRIS Navigation and planning");
 
 
     argc2 = argc;
