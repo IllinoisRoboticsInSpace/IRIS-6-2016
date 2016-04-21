@@ -266,10 +266,12 @@ void FreeSixIMU::getQ(float * q) {
   //AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], val[6], val[7], val[8]);
   // use the call below when using a 6DOF IMU
   AHRSupdate(val[3] * M_PI/180, val[4] * M_PI/180, val[5] * M_PI/180, val[0], val[1], val[2], 0, 0, 0);
-  q[0] = q0;
-  q[1] = q1;
-  q[2] = q2;
-  q[3] = q3;
+  if(q){
+    q[0] = q0;
+    q[1] = q1;
+    q[2] = q2;
+    q[3] = q3;
+  }
 }
 
 // Returns the Euler angles in radians defined with the Aerospace sequence.
