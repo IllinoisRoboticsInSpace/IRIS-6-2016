@@ -18,6 +18,8 @@ public:
     {
         while(degrees>360.0)
             degrees-=360.0;
+        while(degrees<0.0)
+            degrees+=360.0;
         target=degrees*(TICKS_PER_DEGREE);
         last_pulse_millis=millis();
     }
