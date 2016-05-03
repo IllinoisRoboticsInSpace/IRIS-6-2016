@@ -386,7 +386,8 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     //cout << "a " << a/50 << " b " << b/50 << endl;
                     a*=2.226618/view.cols;
                     b*=2.226618/view.cols;
-		    c*=2.226618/view.cols;
+                    c-=view.cols/2;
+                    c*=2.226618/view.cols;
                     float dx=w+d*tan(M_PI/2-b);
                     float dy=d+w*tan(M_PI/2-a);
                     float dperp=(w*dy-(dy*2-d)*dx)/(dx*dx+dy*dy);
@@ -395,15 +396,16 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     //cout << "dx " << dx << " dy " << dy << endl;
                     
                     //rotate webcam!
-                    float delta=(c-view.cols/2)*12/view.cols;
-                    if(abs(delta)>1)webcam_angle+=delta;
+                    float delta=c*180./M_PI/4.;
+                    if(abs(delta)>10)
+                        webcam_angle+=delta;
                     while(webcam_angle<0)webcam_angle+=360;
                     while(webcam_angle>360)webcam_angle-=360;
                     std_msgs::Float32 msg;
                     msg.data=webcam_angle;
                     pub.publish(msg);
 
-                    cout << "webcam nav x " << x << " y " << y << " th " << webcam_angle << endl;
+                    cout << "webcam nav x " << x << " y " << y << " th " << webcam_angle << " delta " << delta << endl;
                     
                     while(lock);
                     lock=1;

@@ -274,8 +274,8 @@ void* thread_depth(void* arg)
             
             chesspos robot_pos = get_chessboard_navigation_pos();
 
-            int xPos=robot_pos.x/10; //position of the robot (true one)
-            int yPos=robot_pos.y/10;
+            int xPos=robot_pos.x/5; //position of the robot (true one)
+            int yPos=robot_pos.y/5;
 
             //PROJECT COMPUTED GRADIENT INTO HISTORIC MAP //
             for(int x_i =-gradientHalfSizeX ; x_i < gradientHalfSizeX; x_i++){
