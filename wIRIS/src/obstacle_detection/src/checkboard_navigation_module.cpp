@@ -20,6 +20,8 @@
 using namespace cv;
 using namespace std;
 
+#include "claibinit_mod.h"
+
 static void help()
 {
     cout <<  "This is a camera calibration sample." << endl
@@ -382,13 +384,14 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     //    cout << "Point " << it->x << " , " << it->y << endl;
                     //}
                     //cout << "a " << a/50 << " b " << b/50 << endl;
-                    a/=50.*180./M_PI;
-                    b/=50.*180./M_PI;
-                    float dx=w/2+d/2*tan(M_PI/2-b);
-                    float dy=d/2+w/2*tan(M_PI/2-a);
+                    a*=2.226618/view.cols;
+                    b*=2.226618/view.cols;
+		    c*=2.226618/view.cols;
+                    float dx=w+d*tan(M_PI/2-b);
+                    float dy=d+w*tan(M_PI/2-a);
                     float dperp=(w*dy-(dy*2-d)*dx)/(dx*dx+dy*dy);
-                    float x=w/2+dy*dperp;
-                    float y=d/2-dx*dperp;
+                    float x=w+dy*dperp;
+                    float y=d-dx*dperp;
                     //cout << "dx " << dx << " dy " << dy << endl;
                     
                     //rotate webcam!
