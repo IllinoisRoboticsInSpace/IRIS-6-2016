@@ -237,10 +237,11 @@ void* thread_depth(void* arg)
                                             
             // GET YAW ANGLE FROM SERIAL
             Vec3f phi = GetSerialGyro(ser);
-                        
+            chesspos robot_pos = get_chessboard_navigation_pos();
+            
             /**POINT CLOUD ADJUSTED FOR PITCH, ROLL AND YAW**/
                         //VI: added yaw matrix
-            Mat3f pitchRoll = csk::FindDownMatrix(downDirection,phi.z-phi0.z);//find the rotation matrix
+            Mat3f pitchRoll = csk::FindDownMatrix(downDirection,-robot_pos.t);//find the rotation matrix
             for(int i = 0; i<pointCount; ++i)//rotate the point cloud data appropriatly
             {
                 pointCloud[i] = pitchRoll*pointCloud[i];
@@ -271,24 +272,25 @@ void* thread_depth(void* arg)
 
             const int xScale = 4;
             const int yScale = 3;
-            
-            chesspos robot_pos = get_chessboard_navigation_pos();
 
             int xPos=robot_pos.x/5; //position of the robot (true one)
             int yPos=robot_pos.y/5;
 
-            //PROJECT COMPUTED GRADIENT INTO HISTORIC MAP //
-            for(int x_i =-gradientHalfSizeX ; x_i < gradientHalfSizeX; x_i++){
-                    for( int y_i = -gradientHalfSizeY ; y_i < gradientHalfSizeY ; y_i++){
+            if(millis()-robot_pos.millis<1000)
+            {
+                //PROJECT COMPUTED GRADIENT INTO HISTORIC MAP //
+                for(int x_i =-gradientHalfSizeX ; x_i < gradientHalfSizeX; x_i++){
+                        for( int y_i = -gradientHalfSizeY ; y_i < gradientHalfSizeY ; y_i++){
 
-                    float val_i = gradient.getPoint(Vec2i(x_i,y_i)).value;
-                    if(val_i != -9999.0 &&
-                                    x_i-xPos>=-historicHalfSizeX && y_i-yPos>=-historicHalfSizeY &&
-                                    x_i-xPos < historicHalfSizeX && y_i-yPos < historicHalfSizeY)
-                            historic.getPoint(Vec2i(x_i-xPos,y_i-yPos)).value = val_i;
-                    }
+                        float val_i = gradient.getPoint(Vec2i(x_i,y_i)).value;
+                        if(val_i != -9999.0 &&
+                                        x_i-xPos>=-historicHalfSizeX && y_i-yPos>=-historicHalfSizeY &&
+                                        x_i-xPos < historicHalfSizeX && y_i-yPos < historicHalfSizeY)
+                                historic.getPoint(Vec2i(x_i-xPos,y_i-yPos)).value = val_i;
+                        }
+                }
             }
-                
+            
             if(map_displayed)
             {
                 for(int i=0; i<sizeVideo; i+=3)

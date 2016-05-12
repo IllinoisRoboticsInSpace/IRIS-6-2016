@@ -29,6 +29,14 @@ static void help()
          <<  "Near the sample file you'll find the configuration file, which has detailed help of "
              "how to edit it.  It may be any OpenCV supported file format XML/YAML." << endl;
 }
+
+long int millis()
+{
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return tp.tv_sec * 1000 + tp.tv_usec / 1000; //get current timestamp in milliseconds
+}
+
 class Settings
 {
 public:
@@ -236,6 +244,7 @@ chesspos get_chessboard_navigation_pos()
     chesspos ret;
     ret.x=pos_chesspos.x;
     ret.y=pos_chesspos.y;
+    ret.t=pos_chesspos.t;
     ret.time=pos_chesspos.time;
     lock=0;
     return ret;
@@ -249,6 +258,7 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
     float webcam_angle=0;
     pos_chesspos.x=0;
     pos_chesspos.y=0;
+    pos_chesspos.t=0;
     pos_chesspos.time=0;
     cout << "Initializing webcam navigation" << endl;
     Settings s;
@@ -411,7 +421,8 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     lock=1;
                     pos_chesspos.x=x;
                     pos_chesspos.y=y;
-                    pos_chesspos.time=time(0);
+                    pos_chesspos.t=webcam_angle*M_PI/180.+c;
+                    pos_chesspos.millis=millis();
                     lock=0;
                     
                     
