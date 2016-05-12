@@ -426,7 +426,7 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     
                     double vehicle_angle=webcam_angle*M_PI/180.+atan2(y,x)-M_PI;
 
-                    cout << "webcam nav x " << x << " y " << y << " th " << webcam_angle << " delta " << delta << " vehicle " <<vehicle_angle<< endl;
+                    cout << "webcam nav x " << x << " y " << y << " th " << webcam_angle << " delta " << delta << " vehicle " <<vehicle_angle*180./M_PI<< endl;
                     
                     while(lock);
                     lock=1;
