@@ -501,9 +501,9 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                 pub.publish(msg);
                 
                 long int t=millis();
-                while( millis()-t<200)
+                while( millis()-t<500)
                     view = s.nextImage();
-                count_lost=8;
+                count_lost=7;
             }else
                 cout << "WEBCAM: pattern lost\n";
         }
