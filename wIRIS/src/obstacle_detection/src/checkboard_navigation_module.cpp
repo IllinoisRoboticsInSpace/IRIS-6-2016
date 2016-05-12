@@ -491,9 +491,11 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                 cout << "WEBCAM: too long lost, doing 360s\n";
                 static int sweep_dir=1;
                 
-                if(webcam_angle+10*sweep_dir>360 || webcam_angle+10*sweep_dir<0)
+                static const int delta_angle = 40;
+                
+                if(webcam_angle+delta_angle*sweep_dir>360 || webcam_angle+delta_angle*sweep_dir<0)
                     sweep_dir=-sweep_dir;
-                webcam_angle+=10*sweep_dir;
+                webcam_angle+=delta_angle*sweep_dir;
                 std_msgs::Float32 msg;
                 msg.data=webcam_angle;
                 pub.publish(msg);
@@ -501,8 +503,9 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                 long int t=millis();
                 while( millis()-t<200)
                     view = s.nextImage();
-                count_lost=7;
-            }
+                count_lost=8;
+            }else
+                cout << "WEBCAM: pattern lost\n";
         }
 
         //----------------------------- Output Text ------------------------------------------------
