@@ -286,9 +286,9 @@ void* thread_depth(void* arg)
 
                         float val_i = gradient.getPoint(Vec2i(x_i,y_i)).value;
                         if(val_i != -9999.0 &&
-                                        x_i-xPos>=-historicHalfSizeX && y_i-yPos>=-historicHalfSizeY &&
-                                        x_i-xPos < historicHalfSizeX && y_i-yPos < historicHalfSizeY)
-                                historic.getPoint(Vec2i(x_i-xPos,y_i-yPos)).value = val_i;
+                                        x_i+xPos>=-historicHalfSizeX && y_i+yPos>=-historicHalfSizeY &&
+                                        x_i+xPos < historicHalfSizeX && y_i+yPos < historicHalfSizeY)
+                                historic.getPoint(Vec2i(x_i+xPos,y_i+yPos)).value = val_i;
                         }
                 }
             }

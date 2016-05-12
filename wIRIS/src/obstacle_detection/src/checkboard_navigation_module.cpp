@@ -412,12 +412,12 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     bool long_turn=false;
                     if(webcam_angle<0)
                     {
-                        webcam_angle=350;
+                        webcam_angle=355;
                         long_turn=true;
                     }
                     if(webcam_angle>360)
                     {
-                        webcam_angle=10;
+                        webcam_angle=5;
                         long_turn=true;
                     }
                     std_msgs::Float32 msg;
