@@ -287,6 +287,8 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
 
     cout << "Webcam navigation ready!" << endl;
 
+    int count_lost = 0;
+
     for(int i = 0;!(*stop_flag);++i)
     {
         bool blinkOutput = false;
@@ -335,154 +337,176 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
 
         if ( found)                // If done with success,
         {
-              // improve the found corners' coordinate accuracy for chessboard
-                if( s.calibrationPattern == Settings::CHESSBOARD)
+            count_lost = 0;
+            // improve the found corners' coordinate accuracy for chessboard
+            if( s.calibrationPattern == Settings::CHESSBOARD)
+            {
+                Mat viewGray;
+                cvtColor(view, viewGray, COLOR_BGR2GRAY);
+                cornerSubPix( viewGray, pointBuf, Size(11,11),
+                    Size(-1,-1), TermCriteria( CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 30, 0.1 ));
+            }
+
+            // Draw the corners.
+            drawChessboardCorners( view, s.boardSize, Mat(pointBuf), found );
+            
+            //cout << endl<<endl<< "***************** list *******************" << endl;
+            
+            if(s.boardSize.width==4 && s.boardSize.height==3)
+            {
+                const int Alist[16][2]={
+                    { 0, 4},{ 0, 5},
+                    { 1, 5},{ 1, 4},
+                    { 2, 6},{ 2, 7},
+                    { 3, 7},{ 3, 6},
+                    { 4, 8},{ 4, 9},
+                    { 5, 9},{ 5, 8},
+                    { 6,10},{ 6,11},
+                    { 7,11},{ 7,10},
+                    };
+                const int Blist[12][2]={
+                    { 0, 2},{ 0, 3},
+                    { 1, 3},{ 1, 2},
+                    { 4, 6},{ 4, 7},
+                    { 5, 7},{ 5, 6},
+                    { 8,10},{ 8,11},
+                    { 9,11},{ 9,10},
+                    };
+                float a=0;
+                float b=0;
+                float c=0;
+                float& w = s.squareSize;
+                float& d = s.depth;
+                for(int ii=0;ii<16;ii++)
+                    a+=pointBuf[Alist[ii][0]].x-pointBuf[Alist[ii][1]].x;
+                for(int ii=0;ii<12;ii++)
+                    b+=pointBuf[Blist[ii][0]].x-pointBuf[Blist[ii][1]].x;
+                for(int ii=0;ii<12;ii++)
+                    c+=pointBuf[Blist[ii][0]].x;
+                a/=16;
+                b/=12;
+                c/=12;
+                if (a<0)
                 {
-                    Mat viewGray;
-                    cvtColor(view, viewGray, COLOR_BGR2GRAY);
-                    cornerSubPix( viewGray, pointBuf, Size(11,11),
-                        Size(-1,-1), TermCriteria( CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 30, 0.1 ));
+                    a=-a;
+                    b=-b;
                 }
-
-                // Draw the corners.
-                drawChessboardCorners( view, s.boardSize, Mat(pointBuf), found );
+                //find circles center and radious
+                //for(vector<Point2f>::iterator it=pointBuf.begin();it!=pointBuf.end();it++)
+                //{
+                //    cout << "Point " << it->x << " , " << it->y << endl;
+                //}
+                //cout << "a " << a/50 << " b " << b/50 << endl;
+                a*=2.226618/view.cols;
+                b*=2.226618/view.cols;
+                c-=view.cols/2;
+                c*=2.226618/view.cols;
+                float dx=w+d*tan(M_PI/2-b);
+                float dy=d+w*tan(M_PI/2-a);
+                float dperp=(w*dy-(dy*2-d)*dx)/(dx*dx+dy*dy);
+                float x=w+dy*dperp;
+                float y=d-dx*dperp;
+                //cout << "dx " << dx << " dy " << dy << endl;
                 
-                //cout << endl<<endl<< "***************** list *******************" << endl;
-                
-                if(s.boardSize.width==4 && s.boardSize.height==3)
+                //rotate webcam!
+                float delta=c*180./M_PI/4.;
+                if(abs(delta)>1)
+                    webcam_angle+=delta;
+                bool long_turn=false;
+                if(webcam_angle<0)
                 {
-                    const int Alist[16][2]={
-                        { 0, 4},{ 0, 5},
-                        { 1, 5},{ 1, 4},
-                        { 2, 6},{ 2, 7},
-                        { 3, 7},{ 3, 6},
-                        { 4, 8},{ 4, 9},
-                        { 5, 9},{ 5, 8},
-                        { 6,10},{ 6,11},
-                        { 7,11},{ 7,10},
-                        };
-                    const int Blist[12][2]={
-                        { 0, 2},{ 0, 3},
-                        { 1, 3},{ 1, 2},
-                        { 4, 6},{ 4, 7},
-                        { 5, 7},{ 5, 6},
-                        { 8,10},{ 8,11},
-                        { 9,11},{ 9,10},
-                        };
-                    float a=0;
-                    float b=0;
-                    float c=0;
-                    float& w = s.squareSize;
-                    float& d = s.depth;
-                    for(int ii=0;ii<16;ii++)
-                        a+=pointBuf[Alist[ii][0]].x-pointBuf[Alist[ii][1]].x;
-                    for(int ii=0;ii<12;ii++)
-                        b+=pointBuf[Blist[ii][0]].x-pointBuf[Blist[ii][1]].x;
-                    for(int ii=0;ii<12;ii++)
-                        c+=pointBuf[Blist[ii][0]].x;
-                    a/=16;
-                    b/=12;
-                    c/=12;
-                    if (a<0)
-                    {
-                        a=-a;
-                        b=-b;
-                    }
-                    //find circles center and radious
-                    //for(vector<Point2f>::iterator it=pointBuf.begin();it!=pointBuf.end();it++)
-                    //{
-                    //    cout << "Point " << it->x << " , " << it->y << endl;
-                    //}
-                    //cout << "a " << a/50 << " b " << b/50 << endl;
-                    a*=2.226618/view.cols;
-                    b*=2.226618/view.cols;
-                    c-=view.cols/2;
-                    c*=2.226618/view.cols;
-                    float dx=w+d*tan(M_PI/2-b);
-                    float dy=d+w*tan(M_PI/2-a);
-                    float dperp=(w*dy-(dy*2-d)*dx)/(dx*dx+dy*dy);
-                    float x=w+dy*dperp;
-                    float y=d-dx*dperp;
-                    //cout << "dx " << dx << " dy " << dy << endl;
-                    
-                    //rotate webcam!
-                    float delta=c*180./M_PI/4.;
-                    if(abs(delta)>1)
-                        webcam_angle+=delta;
-                    bool long_turn=false;
-                    if(webcam_angle<0)
-                    {
-                        webcam_angle=355;
-                        long_turn=true;
-                    }
-                    if(webcam_angle>360)
-                    {
-                        webcam_angle=5;
-                        long_turn=true;
-                    }
-                    std_msgs::Float32 msg;
-                    msg.data=webcam_angle;
-                    pub.publish(msg);
-                    
-                    double vehicle_angle=webcam_angle*M_PI/180.-atan2(y,x)-M_PI;
-
-                    cout << "webcam nav x " << x << " y " << y << " th " << webcam_angle << " delta " << delta << " vehicle " <<vehicle_angle*180./M_PI<< endl;
-                    
-                    while(lock);
-                    lock=1;
-                    pos_chesspos.x=x;
-                    pos_chesspos.y=y;
-                    pos_chesspos.t=vehicle_angle;
-                    pos_chesspos.millis=millis();
-                    lock=0;
-                    
-                    if(long_turn || abs(delta)>1)
-                    {
-                        long int t=millis();
-                        while( millis()-t<(long_turn?3000:200))
-                            view = s.nextImage();
-                    }
-                    
-                    if(false){
-                        float rx=sqrt(pow(dx-w/2,2)+pow(d/2,2));
-                        float ry=sqrt(pow(dy-d/2,2)+pow(w/2,2));
-                        //cout << "rx " << rx << " ry " << ry << endl;
-                        float ox=500,oy=100;
-                        Mat dgrm = Mat::zeros( 1000, 1000, CV_8UC3 );
-                        ellipse( dgrm,
-                           Point( ox+dx, oy ),
-                           Point( rx,rx ),
-                           0,
-                           0,
-                           360,
-                           Scalar( 255, 0, 0 ),
-                           1,
-                           8);
-                        ellipse( dgrm,
-                           Point( ox, oy+dy ),
-                           Point( ry,ry ),
-                           0,
-                           0,
-                           360,
-                           Scalar( 255, 0, 0 ),
-                           1,
-                           8);
-                        rectangle( dgrm,
-                           Point( ox+w/2,oy+d/2 ),
-                           Point( ox-w/2,oy-d/2),
-                           Scalar( 0, 255, 255 ),
-                           1,
-                           8 );
-                        imshow("Diagram", dgrm);
-                    }
-                    located=true;
-
+                    webcam_angle=355;
+                    long_turn=true;
                 }
-                else cout << "Wrong pattern size!";
+                if(webcam_angle>360)
+                {
+                    webcam_angle=5;
+                    long_turn=true;
+                }
+                std_msgs::Float32 msg;
+                msg.data=webcam_angle;
+                pub.publish(msg);
+                
+                double vehicle_angle=webcam_angle*M_PI/180.-atan2(y,x)-M_PI;
+
+                cout << "webcam nav x " << x << " y " << y << " th " << webcam_angle << " delta " << delta << " vehicle " <<vehicle_angle*180./M_PI<< endl;
+                
+                while(lock);
+                lock=1;
+                pos_chesspos.x=x;
+                pos_chesspos.y=y;
+                pos_chesspos.t=vehicle_angle;
+                pos_chesspos.millis=millis();
+                lock=0;
+                
+                if(long_turn || abs(delta)>1)
+                {
+                    long int t=millis();
+                    while( millis()-t<(long_turn?3000:200))
+                        view = s.nextImage();
+                }
+                
+                if(false){
+                    float rx=sqrt(pow(dx-w/2,2)+pow(d/2,2));
+                    float ry=sqrt(pow(dy-d/2,2)+pow(w/2,2));
+                    //cout << "rx " << rx << " ry " << ry << endl;
+                    float ox=500,oy=100;
+                    Mat dgrm = Mat::zeros( 1000, 1000, CV_8UC3 );
+                    ellipse( dgrm,
+                       Point( ox+dx, oy ),
+                       Point( rx,rx ),
+                       0,
+                       0,
+                       360,
+                       Scalar( 255, 0, 0 ),
+                       1,
+                       8);
+                    ellipse( dgrm,
+                       Point( ox, oy+dy ),
+                       Point( ry,ry ),
+                       0,
+                       0,
+                       360,
+                       Scalar( 255, 0, 0 ),
+                       1,
+                       8);
+                    rectangle( dgrm,
+                       Point( ox+w/2,oy+d/2 ),
+                       Point( ox-w/2,oy-d/2),
+                       Scalar( 0, 255, 255 ),
+                       1,
+                       8 );
+                    imshow("Diagram", dgrm);
+                }
+                located=true;
+
+            }
+            else cout << "Wrong pattern size!";
+        }
+        else
+        {
+            count_lost++;
+            if(count_lost>10)
+            {
+                cout << "WEBCAM: too long lost, doing 360s\n";
+                static int sweep_dir=1;
+                
+                if(webcam_angle+10*sweep_dir>360 || webcam_angle+10*sweep_dir<0)
+                    sweep_dir=-sweep_dir;
+                webcam_angle+=10*sweep_dir;
+                std_msgs::Float32 msg;
+                msg.data=webcam_angle;
+                pub.publish(msg);
+                
+                long int t=millis();
+                while( millis()-t<200)
+                    view = s.nextImage();
+                count_lost=7;
+            }
         }
 
         //----------------------------- Output Text ------------------------------------------------
-        string msg = found ? (located ? "Located" : "Pattern not usable") : "Could not find pattern";
+        //string msg = found ? (located ? "Located" : "Pattern not usable") : "Could not find pattern";
         int baseLine = 0;
         Size textSize = getTextSize(msg, 1, 1, 1, &baseLine);
         Point textOrigin(view.cols - 2*textSize.width - 10, view.rows - 2*baseLine - 10);
