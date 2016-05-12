@@ -245,7 +245,7 @@ chesspos get_chessboard_navigation_pos()
     ret.x=pos_chesspos.x;
     ret.y=pos_chesspos.y;
     ret.t=pos_chesspos.t;
-    ret.time=pos_chesspos.time;
+    ret.millis=pos_chesspos.millis;
     lock=0;
     return ret;
 }
@@ -259,7 +259,7 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
     pos_chesspos.x=0;
     pos_chesspos.y=0;
     pos_chesspos.t=0;
-    pos_chesspos.time=0;
+    pos_chesspos.millis=0;
     cout << "Initializing webcam navigation" << endl;
     Settings s;
     //help();
