@@ -234,7 +234,7 @@ static void read(const FileNode& node, Settings& x, const Settings& default_valu
 enum { DETECTION = 0, CAPTURING = 1, CALIBRATED = 2, FOUND = 3, LOCATED = 4 };
 
 //Global settings file
-chesspos pos_chesspos;
+chesspos pos_chesspos={0.,0.,0.,0};
 int lock=0;
 
 chesspos get_chessboard_navigation_pos()
@@ -293,6 +293,7 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
         bool blinkOutput = false;
 
         view = s.nextImage();
+        if(i==0) cout<<"webcam image size is "<<s.cols<<"x"<<s.rows<<"\n";
 
         //cout << "Webcam navigation data!" << endl;
 
@@ -421,7 +422,7 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     lock=1;
                     pos_chesspos.x=x;
                     pos_chesspos.y=y;
-                    pos_chesspos.t=webcam_angle*M_PI/180.+c;
+                    pos_chesspos.t=webcam_angle*M_PI/180.;
                     pos_chesspos.millis=millis();
                     lock=0;
                     

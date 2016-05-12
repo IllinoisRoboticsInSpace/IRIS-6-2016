@@ -64,6 +64,8 @@ volatile bool threads_stop = false;
 int argc2;
 char** argv2;
 
+template<typename T> T pow2(T x){return x*x;}
+float distS(float a){return min(abs(a),M_PI-abs(a));}
 
 /**DATA**/
 static uint16_t* pDepth = NULL;
@@ -200,8 +202,8 @@ void* thread_depth(void* arg)
 
     Map<float> historic(Vec2i(historicHalfSizeX, historicHalfSizeY));
     
-    Vec3f phi0 = GetSerialGyro(ser);
-    phi0.z+= M_PI/2;
+    //Vec3f phi0;// = GetSerialGyro(ser);
+    //phi0.z+= M_PI/2;
 
 
     while(not threads_stop)
@@ -236,7 +238,7 @@ void* thread_depth(void* arg)
             depth_used = true;
                                             
             // GET YAW ANGLE FROM SERIAL
-            Vec3f phi = GetSerialGyro(ser);
+            //Vec3f phi = GetSerialGyro(ser);
             chesspos robot_pos = get_chessboard_navigation_pos();
             
             /**POINT CLOUD ADJUSTED FOR PITCH, ROLL AND YAW**/
@@ -324,8 +326,16 @@ void* thread_depth(void* arg)
                 for(int i=0; i<sizeHTTPimage; i+=3)
                 {
                     int x = i/3;
-                    float val = historic.getPoint(Vec2i( (((x%(historicHalfSizeX*2)))-historicHalfSizeX), ((x/(historicHalfSizeY*2)) -historicHalfSizeY))).value;
-                    if(val == -9999.0)
+                    int px =(((x%(historicHalfSizeX*2)))-historicHalfSizeX);
+                    int py =((x/(historicHalfSizeY*2)) -historicHalfSizeY);
+                    float val = historic.getPoint(Vec2i( px,py )).value;
+                    if(pow2(xPos-px)+pow2(py-yPos)<5+6.28-distS(atan2(1.*py-yPos,1.*xPos-px)-robot_pos.t)) //Mark current position
+                    {
+                        pMapHTTP[i+0] = 0;
+                        pMapHTTP[i+1] = 0;
+                        pMapHTTP[i+2] = 255;
+                    }
+                    else if(val == -9999.0)
                     {
                         pMapHTTP[i+0] = 0;//red
                         pMapHTTP[i+1] = 0;//green
@@ -344,26 +354,6 @@ void* thread_depth(void* arg)
                         pMapHTTP[i+2] = 255;
                     }
                 }
-                int j=3*(historicHalfSizeY*2*xPos+yPos);
-                pMapHTTP[j+0] = 0;
-                pMapHTTP[j+1] = 0;
-                pMapHTTP[j+2] = 255;    
-                j=3*(historicHalfSizeY*2*xPos+yPos+1);
-                pMapHTTP[j+0] = 0;
-                pMapHTTP[j+1] = 0;
-                pMapHTTP[j+2] = 255;    
-                j=3*(historicHalfSizeY*2*xPos+yPos-1);
-                pMapHTTP[j+0] = 0;
-                pMapHTTP[j+1] = 0;
-                pMapHTTP[j+2] = 255;    
-                j=3*(historicHalfSizeY*2*(xPos-1)+yPos);
-                pMapHTTP[j+0] = 0;
-                pMapHTTP[j+1] = 0;
-                pMapHTTP[j+2] = 255;  
-                j=3*(historicHalfSizeY*2*(xPos+1)+yPos);
-                pMapHTTP[j+0] = 0;
-                pMapHTTP[j+1] = 0;
-                pMapHTTP[j+2] = 255;  
                 tcpip_map_used = false;
             }
             
