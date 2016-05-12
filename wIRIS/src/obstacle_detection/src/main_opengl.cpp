@@ -243,7 +243,7 @@ void* thread_depth(void* arg)
             
             /**POINT CLOUD ADJUSTED FOR PITCH, ROLL AND YAW**/
                         //VI: added yaw matrix
-            Mat3f pitchRoll = csk::FindDownMatrix(downDirection,-robot_pos.t);//find the rotation matrix
+            Mat3f pitchRoll = csk::FindDownMatrix(downDirection,robot_pos.t);//find the rotation matrix
             for(int i = 0; i<pointCount; ++i)//rotate the point cloud data appropriatly
             {
                 pointCloud[i] = pitchRoll*pointCloud[i];
@@ -329,7 +329,13 @@ void* thread_depth(void* arg)
                     int px =(((x%(historicHalfSizeX*2)))-historicHalfSizeX);
                     int py =((x/(historicHalfSizeY*2)) -historicHalfSizeY);
                     float val = historic.getPoint(Vec2i( px,py )).value;
-                    if(pow2(xPos-px)+pow2(py-yPos)<5+6.28-distS(atan2(1.*py-yPos,1.*xPos-px)-robot_pos.t)) //Mark current position
+                    if(px==0 || py==0) //Mark axis
+                    {
+                        pMapHTTP[i+0] = 0;
+                        pMapHTTP[i+1] = 255;
+                        pMapHTTP[i+2] = 0;
+                    }
+                    else if(pow2(xPos-px)+pow2(py-yPos)<(distS(atan2(1.*py-yPos,1.*xPos-px)-robot_pos.t)<1:10:5)) //Mark current position
                     {
                         pMapHTTP[i+0] = 0;
                         pMapHTTP[i+1] = 0;
