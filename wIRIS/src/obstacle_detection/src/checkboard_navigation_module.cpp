@@ -430,7 +430,7 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     lock=1;
                     pos_chesspos.x=x;
                     pos_chesspos.y=y;
-                    pos_chesspos.t=webcam_angle*M_PI/180.;
+                    pos_chesspos.t=webcam_angle*M_PI/180.+atan2(y,x)-M_PI;
                     pos_chesspos.millis=millis();
                     lock=0;
                     
