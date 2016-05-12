@@ -407,10 +407,19 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     
                     //rotate webcam!
                     float delta=c*180./M_PI/4.;
-                    if(abs(delta)>3)
+                    if(abs(delta)>1)
                         webcam_angle+=delta;
-                    while(webcam_angle<0)webcam_angle=350;
-                    while(webcam_angle>360)webcam_angle=10;
+                    bool long_turn=false;
+                    if(webcam_angle<0)
+                    {
+                        webcam_angle=350;
+                        long_turn=true;
+                    }
+                    if(webcam_angle>360)
+                    {
+                        webcam_angle=10;
+                        long_turn=true;
+                    }
                     std_msgs::Float32 msg;
                     msg.data=webcam_angle;
                     pub.publish(msg);
@@ -425,10 +434,10 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                     pos_chesspos.millis=millis();
                     lock=0;
                     
-                    if(abs(delta)>3)
+                    if(long_turn || abs(delta)>1)
                     {
                         long int t=millis();
-                        while( millis()-t<500)
+                        while( millis()-t<(long_turn?3000:200))
                             view = s.nextImage();
                     }
                     
