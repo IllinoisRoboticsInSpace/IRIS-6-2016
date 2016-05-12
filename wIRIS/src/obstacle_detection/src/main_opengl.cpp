@@ -64,8 +64,12 @@ volatile bool threads_stop = false;
 int argc2;
 char** argv2;
 
+double fmod2pi(double v)
+{
+    return fmod(fmod(v,M_PI*2)+M_PI*4,M_PI*2);
+}
 template<typename T> T pow2(T x){return x*x;}
-double distS(double a){return min(abs(a),M_PI-abs(a));}
+double distS(double a){return min(fmod2pi(a),M_PI-fmod2pi(a));}
 
 /**DATA**/
 static uint16_t* pDepth = NULL;
