@@ -335,7 +335,7 @@ void* thread_depth(void* arg)
                         pMapHTTP[i+1] = 255;
                         pMapHTTP[i+2] = 0;
                     }
-                    else if(pow2(xPos-px)+pow2(py-yPos)<(distS(atan2(1.*py-yPos,1.*xPos-px)-robot_pos.t)<1:10:5)) //Mark current position
+                    else if(pow2(xPos-px)+pow2(py-yPos)<(distS(atan2(1.*py-yPos,1.*xPos-px)-robot_pos.t)<1?10:5)) //Mark current position
                     {
                         pMapHTTP[i+0] = 0;
                         pMapHTTP[i+1] = 0;
