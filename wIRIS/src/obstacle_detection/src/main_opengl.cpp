@@ -243,7 +243,6 @@ void* thread_depth(void* arg)
             chesspos robot_pos = get_chessboard_navigation_pos();
             
             /**POINT CLOUD ADJUSTED FOR PITCH, ROLL AND YAW**/
-                        //VI: added yaw matrix
             Mat3f pitchRoll = csk::FindDownMatrix(downDirection,robot_pos.t);//find the rotation matrix
             for(int i = 0; i<pointCount; ++i)//rotate the point cloud data appropriatly
             {
