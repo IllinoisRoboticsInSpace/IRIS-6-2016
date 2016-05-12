@@ -327,7 +327,7 @@ void* thread_depth(void* arg)
                 {
                     int x = i/3;
                     int px =(((x%(historicHalfSizeX*2)))-historicHalfSizeX);
-                    int py =((x/(historicHalfSizeY*2)) -historicHalfSizeY);
+                    int py =-((x/(historicHalfSizeY*2)) -historicHalfSizeY);
                     float val = historic.getPoint(Vec2i( px,py )).value;
                     if(px==0 || py==0) //Mark axis
                     {
