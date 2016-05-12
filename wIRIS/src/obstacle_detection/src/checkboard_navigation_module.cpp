@@ -507,9 +507,9 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
 
         //----------------------------- Output Text ------------------------------------------------
         //string msg = found ? (located ? "Located" : "Pattern not usable") : "Could not find pattern";
-        int baseLine = 0;
-        Size textSize = getTextSize(msg, 1, 1, 1, &baseLine);
-        Point textOrigin(view.cols - 2*textSize.width - 10, view.rows - 2*baseLine - 10);
+        //int baseLine = 0;
+        //Size textSize = getTextSize(msg, 1, 1, 1, &baseLine);
+        //Point textOrigin(view.cols - 2*textSize.width - 10, view.rows - 2*baseLine - 10);
         
         //if( blinkOutput )
             //bitwise_not(view, view);
@@ -519,7 +519,7 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
         //putText( view, msg, textOrigin, 1, 1, located ?  GREEN : RED);
         //imshow("Image View", view);
         //char key = (char)waitKey(s.inputCapture.isOpened() ? 50 : s.delay);
-        sleep(0.050);
+        //sleep(0.050);
         //if( key  == ESC_KEY )
         //    break;
 
