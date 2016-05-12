@@ -22,6 +22,11 @@ using namespace std;
 
 #include "claibinit_mod.h"
 
+double fmod2pi(double v)
+{
+    return fmod(fmod(v,M_PI*2)+M_PI*4,M_PI*2);
+}
+
 static void help()
 {
     cout <<  "This is a camera calibration sample." << endl
@@ -427,7 +432,7 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                 msg.data=webcam_angle;
                 pub.publish(msg);
                 
-                double vehicle_angle=webcam_angle*M_PI/180.-atan2(y,x)-M_PI;
+                double vehicle_angle=fmod2pi(webcam_angle*M_PI/180.-atan2(y,x)-M_PI);
 
                 cout << "webcam nav x " << x << " y " << y << " th " << webcam_angle << " delta " << delta << " vehicle " <<vehicle_angle*180./M_PI<< endl;
                 
@@ -491,7 +496,7 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                 cout << "WEBCAM: too long lost, doing 360s\n";
                 static int sweep_dir=1;
                 
-                static const int delta_angle = 40;
+                static const int delta_angle = 45;
                 
                 if(webcam_angle+delta_angle*sweep_dir>360 || webcam_angle+delta_angle*sweep_dir<0)
                     sweep_dir=-sweep_dir;
@@ -501,9 +506,9 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
                 pub.publish(msg);
                 
                 long int t=millis();
-                while( millis()-t<500)
+                while( millis()-t<600)
                     view = s.nextImage();
-                count_lost=7;
+                count_lost=8;
             }else
                 cout << "WEBCAM: pattern lost\n";
         }
