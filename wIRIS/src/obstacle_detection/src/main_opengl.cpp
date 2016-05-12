@@ -244,7 +244,7 @@ void* thread_depth(void* arg)
             
             /**POINT CLOUD ADJUSTED FOR PITCH, ROLL AND YAW**/
                         //VI: added yaw matrix
-            Mat3f pitchRoll = csk::FindDownMatrix(downDirection,-robot_pos.t-M_PI);//find the rotation matrix
+            Mat3f pitchRoll = csk::FindDownMatrix(downDirection,robot_pos.t);//find the rotation matrix
             for(int i = 0; i<pointCount; ++i)//rotate the point cloud data appropriatly
             {
                 pointCloud[i] = pitchRoll*pointCloud[i];
