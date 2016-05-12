@@ -65,7 +65,7 @@ int argc2;
 char** argv2;
 
 template<typename T> T pow2(T x){return x*x;}
-float distS(float a){return min(abs(a),M_PI-abs(a));}
+double distS(double a){return min(abs(a),M_PI-abs(a));}
 
 /**DATA**/
 static uint16_t* pDepth = NULL;

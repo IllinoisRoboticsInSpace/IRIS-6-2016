@@ -289,11 +289,10 @@ int init_chessboard_navigation(const string inputSettingsFile, volatile bool * s
 
     for(int i = 0;!(*stop_flag);++i)
     {
-        Mat view;
         bool blinkOutput = false;
 
-        view = s.nextImage();
-        if(i==0) cout<<"webcam image size is "<<s.cols<<"x"<<s.rows<<"\n";
+        Mat view = s.nextImage();
+        if(i==0) cout<<"webcam image size is "<<view.cols<<"x"<<view.rows<<"\n";
 
         //cout << "Webcam navigation data!" << endl;
 
