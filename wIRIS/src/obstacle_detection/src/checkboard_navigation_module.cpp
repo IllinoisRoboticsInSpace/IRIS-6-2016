@@ -95,7 +95,7 @@ bool nextImage(VideoCapture & inputCapture, Mat & result, long * millis_timestam
     return true;
 }
 
-int init_chessboard_navigation(void * stop_flag_ptr )
+void* init_chessboard_navigation(void * stop_flag_ptr )
 {
     volatile bool * stop_flag = (bool*) stop_flag_ptr;
     ros::NodeHandle n("chessboard_navigation");

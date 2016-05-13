@@ -10,7 +10,6 @@
 #include <pthread.h>//pthreads
 #include <string.h>//strcpy
 #include <vector> //for std::vector
-#include <signal.h>
 using namespace std;
 /**ROS**/
 #include "ros/ros.h"
@@ -407,7 +406,7 @@ void* thread_kinect(void* arg)
 /**================================================================================**/
 /**=================================  MAIN  =======================================**/
 /**================================================================================**/
-int init_kinect_mapping(void * stop_flag)
+void* init_kinect_mapping(void * stop_flag)
 {
         volatile bool* async_stop_flag = (bool*)stop_flag;
         /**===================================================**/
