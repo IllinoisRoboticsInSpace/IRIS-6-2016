@@ -71,7 +71,7 @@ long convertToEpoch(long v4l_ts_ms) {
 
 }
 
-bool nextImage(VideoCapture & inputCapture, Mat & result, long * millis_timestamp)
+bool nextImage(VideoCapture & inputCapture, Mat & result, long * millis_timestamp=0)
 {
     for (long i = millis();millis() - i < 20;)//stay 20 ms discarding frames to ensure we get a current frame at the end
     {
@@ -105,6 +105,9 @@ int init_chessboard_navigation(void * stop_flag_ptr )
     pos_chesspos.y = 0;
     pos_chesspos.t = 0;
     pos_chesspos.millis = 0;
+    Size boardSize(4,3);   //CHANGE HERE THE AMOUNT OF SQUARES
+    float depth = 6.03;    //CHANGE HERE THE SHAPE  OF SQUARES
+    float squareSize =4.13;//CHANGE HERE THE SHAPE  OF SQUARES
 
     int camera_id = 0;
 
@@ -163,31 +166,29 @@ int init_chessboard_navigation(void * stop_flag_ptr )
                 }
                 continue;
             }
-            if (s.flipVertical)    flip(view, view, 0);
+            flip(view, view, 0);
 
             vector<Point2f> pointBuf;
 
-            bool found = findChessboardCorners(view, s.boardSize, pointBuf,
-                    CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE);
+            bool found = findChessboardCorners(view, boardSize
+                    pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE);
 
             if (found)                // If done with success,
             {
                 count_lost = 0;
                 // improve the found corners' coordinate accuracy for chessboard
-                if (s.calibrationPattern == Settings::CHESSBOARD)
-                {
-                    Mat viewGray;
-                    cvtColor(view, viewGray, COLOR_BGR2GRAY);
-                    cornerSubPix(viewGray, pointBuf, Size(11, 11),
-                        Size(-1, -1), TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
-                }
+                Mat viewGray;
+                cvtColor(view, viewGray, COLOR_BGR2GRAY);
+                cornerSubPix(viewGray, pointBuf, Size(11, 11),
+                    Size(-1, -1), TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+                
 
                 // Draw the corners.
-                drawChessboardCorners(view, s.boardSize, Mat(pointBuf), found);
+                drawChessboardCorners(view, boardSize, Mat(pointBuf), found);
 
                 //cout << endl<<endl<< "***************** list *******************" << endl;
 
-                if (s.boardSize.width == 4 && s.boardSize.height == 3)
+                //if (boardSize.width == 4 && boardSize.height == 3)
                 {
                     const int Alist[16][2] = {
                         { 0, 4},{ 0, 5},
@@ -210,8 +211,8 @@ int init_chessboard_navigation(void * stop_flag_ptr )
                     float a = 0;
                     float b = 0;
                     float c = 0;
-                    float& w = s.squareSize;
-                    float& d = s.depth;
+                    float& w = squareSize;
+                    float& d = depth;
                     for (int ii = 0;ii < 16;ii++)
                         a += pointBuf[Alist[ii][0]].x - pointBuf[Alist[ii][1]].x;
                     for (int ii = 0;ii < 12;ii++)
@@ -278,7 +279,7 @@ int init_chessboard_navigation(void * stop_flag_ptr )
                     {
                         long int t = millis();
                         while (millis() - t < (long_turn ? 3000 : 200))
-                            view = s.nextImage(inputCapture);
+                             nextImage(inputCapture, view);
                     }
 
                 }
@@ -303,7 +304,7 @@ int init_chessboard_navigation(void * stop_flag_ptr )
 
                     long int t = millis();
                     while (millis() - t < 600)
-                        view = s.nextImage(inputCapture);
+                         nextImage(inputCapture, view);
                     count_lost = 8;
                 }
                 else

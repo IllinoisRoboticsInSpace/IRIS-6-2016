@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>//pthreads
+#include <signal.h>
 
 #include <ros/ros.h>
 
@@ -41,8 +42,8 @@ int main(int argc, char **argv)
 
     
 
-    int chessboard = pthread_create(&chessboard_t, NULL, init_chessboard_navigation, &stop_flag);
-    int navigation = pthread_create(&navigation_t, NULL, init_navigation_and_mapping, &stop_flag);
+    int chessboard = pthread_create(&chessboard_t, NULL, init_chessboard_navigation, (void*)&stop_flag);
+    int navigation = pthread_create(&navigation_t, NULL, init_kinect_mapping, (void*)&stop_flag);
     if(navigation || chessboard )
         exit(EXIT_FAILURE);
 
