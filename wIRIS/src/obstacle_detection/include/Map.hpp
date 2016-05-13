@@ -245,13 +245,13 @@ private:
             if(right==defaultValue)
                 right = origin;
 
-            if(up-origin >= tolerance or origin-up >= tolerance)
+            if(up-origin >= tolerance || origin-up >= tolerance)
                 return map_occupied;
-            else if(left-origin >= tolerance or origin-left >= tolerance)
+            else if(left-origin >= tolerance || origin-left >= tolerance)
                 return map_occupied;
-            else if(down-origin >= tolerance or origin-down >= tolerance)
+            else if(down-origin >= tolerance || origin-down >= tolerance)
                 return map_occupied;
-            else if(right-origin >= tolerance or origin-right >= tolerance)
+            else if(right-origin >= tolerance || origin-right >= tolerance)
                 return map_occupied;
         }
         return map_unoccupied;

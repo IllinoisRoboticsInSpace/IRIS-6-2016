@@ -59,13 +59,15 @@ const int sizeVideo = FREENECT_VIDEO_RGB_SIZE;//we need this much for the video 
 const string topicName = "iris_obstacles";//this is the name the listener will look for
 const string myNodeName = "iris_obstacles_talker";
 /**FOR THREADS**/
-volatile bool depth_used = true, video_used = true, depth_displayed = true, map_displayed = true, tcpip_map_used = true;
+volatile bool depth_used = true;
+volatile bool video_used = true;
+volatile bool depth_displayed = true;
+volatile bool map_displayed = true;
+volatile bool tcpip_map_used = true;
 volatile bool main_stop = false;
 volatile bool threads_stop = false;
+volatile int got_data_kinect = true;
 //we can't just use a mutex because the whole purpose is to not block!
-int argc2;
-char** argv2;
-
 
 template<typename T> T pow2(T x){return x*x;}
 double distS(double a){return min(fmod2pi(a),M_PI-fmod2pi(a));}
@@ -81,20 +83,15 @@ static unsigned char* pMapHTTP = NULL;
 static Vec3f downDirection(0,0,0);//static to prevent other files from seeing this
 
 /**LFN**/
-static freenect_context* f_ctx;
+static freenect_context* f_ctx=0;
 freenect_device* f_dev;
-
-/**MISC**/
-//static char userChoice = '\0';//
-
-// SERIAL
-serial::Serial ser;
 
 /**================================================================================**/
 /**DEPTH SENSOR CALLBACK**/
 /**================================================================================**/
 void depth_cb(freenect_device* pDevice, void* v_depth, uint32_t timestamp)
 {
+	got_data_kinect = true;
         //cout<<"data at depth!\n";
     if(depth_used)
     {
@@ -127,7 +124,7 @@ float stof0(const string &a) {
         return ans;
 }
 //////////////////////////////////////////////////////////////////////////////////////
-// SERIAL INTERPRETER FOR ROLL, PITCH AND YAW
+// SERIAL INTERPRETER FOR ROLL, PITCH AND YAW  //(Not currently used)
 //////////////////////////////////////////////////////////////////////////////////////
 Vec3f GetSerialGyro(serial::Serial & s)
 {
@@ -164,50 +161,42 @@ Vec3f GetSerialGyro(serial::Serial & s)
         return return_val;      
 }
 
+// SERIAL INITIALIZATION
+bool  SerialConnect(serial::Serial & ser)
+{
+	try
+	{
+		ser.setPort("/dev/ttyACM0");
+		ser.setBaudrate(9600);//115200
+		serial::Timeout to = serial::Timeout::simpleTimeout(1);
+		ser.setTimeout(to);
+		ser.open();
+	}
+	catch (serial::IOException& e)
+	{
+		ROS_ERROR_STREAM("Unable to open port ");
+		ROS_INFO("Unable to open port ");
+		perror("Unable to open port ");
+	}
+
+	if (ser.isOpen()) {
+		ROS_INFO_STREAM("Serial Port initialized");
+		return true;
+	}
+	else {
+		ROS_ERROR_STREAM("Unable to open port ");
+		ROS_INFO("Unable to open port ");
+		perror("Unable to open port ");
+	}
+	return false;
+}
+
 /**================================================================================**/
 /**DEPTH PROCESS THREAD**/
 /**================================================================================**/
 void* thread_depth(void* arg)
 {
-    /**ROS**/
-    int bufferSize = 20;//size of buffer, if messages accumulate, start throwing away after this many pile up
-    //ros::NodeHandle nodeHandle;
-    //ros::Publisher publisher = nodeHandle.advertise<sensor_msgs::PointCloud2>(topicName, bufferSize);
-
-    // SERIAL INITIALIZATION
-    while(0) //not threads_stop)
-    {
-        try
-        {
-            ser.setPort("/dev/ttyACM0");
-            ser.setBaudrate(9600);//115200
-            serial::Timeout to = serial::Timeout::simpleTimeout(1);
-            ser.setTimeout(to);
-            ser.open();
-        }
-        catch (serial::IOException& e)
-        {
-            ROS_ERROR_STREAM("Unable to open port ");
-            ROS_INFO("Unable to open port ");
-            perror("Unable to open port ");
-        }
-
-        if(ser.isOpen()){
-            ROS_INFO_STREAM("Serial Port initialized");
-            break;
-        }else{
-            ROS_ERROR_STREAM("Unable to open port ");
-            ROS_INFO("Unable to open port ");
-            perror("Unable to open port ");
-        }
-    }
-        
-
     Map<float> historic(Vec2i(historicHalfSizeX, historicHalfSizeY));
-    
-    //Vec3f phi0;// = GetSerialGyro(ser);
-    //phi0.z+= M_PI/2;
-
 
     while(not threads_stop)
     {
@@ -241,7 +230,6 @@ void* thread_depth(void* arg)
             depth_used = true;
                                             
             // GET YAW ANGLE FROM SERIAL
-            //Vec3f phi = GetSerialGyro(ser);
             chesspos robot_pos = get_chessboard_navigation_pos();
             
             /**POINT CLOUD ADJUSTED FOR PITCH, ROLL AND YAW**/
@@ -394,7 +382,7 @@ void* thread_kinect(void* arg)
     freenect_start_depth(f_dev);//tell it to start reading depth
 
 
-    while(not threads_stop && freenect_process_events(f_ctx) >= 0)/**this is primary loop for kinect stuff**/
+    while(!threads_stop_depth && !threads_stop && freenect_process_events(f_ctx) >= 0)/**this is primary loop for kinect stuff**/
     {
         double dx,dy,dz;
         freenect_raw_tilt_state* pState;
@@ -415,113 +403,99 @@ void* thread_kinect(void* arg)
 }
 
 
-//***********************************************************************************
-//                             Navigation thread
-//***********************************************************************************
-void* thread_chessboard(void* arg)
-{   
-    while(!threads_stop)
-    {
-        init_chessboard_navigation(ros::package::getPath("obstacle_detection")+"/x43.xml",&threads_stop);
-        sleep(0.100);
-    }
-}
-
-
-void my_handler(int s){
-           printf("Caught signal %d\n",s);
-           exit(1); 
-}
-
 /**================================================================================**/
 /**=================================  MAIN  =======================================**/
 /**================================================================================**/
-int main(int argc, char **argv)
+int init_kinect_mapping(void * stop_flag)
 {
-    
-    //control C handling
-    struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = my_handler;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
-    sigaction(SIGINT, &sigIntHandler, NULL);
+	volatile bool* async_stop_flag = (bool*)stop_flag;
+	/**===================================================**/
+	/**ALL ABOUT INITIALIZING THE CONNECTION WITH KINECT!!**/
+	/**===================================================**/
+	pDepthDisplay = static_cast<uint16_t*>(malloc(sizeDepth));
+	pDepthFeed = static_cast<char*>(malloc(sizeVideo));//used to rgb display what the kinect sees
+	pDepth = static_cast<uint16_t*>(malloc(sizeDepth));//each point is a uint16_t for depth
+	pMapFeed = static_cast<char*>(malloc(sizeVideo));
+	pVideo = static_cast<char*>(malloc(sizeVideo));//each point needs 3 chars to represent the color there (r255,g255,b255)
 
-    //ROS init
-    ros::init(argc, argv, "IRIS_Navigation_and_planning", ros::init_options::NoSigintHandler);
+	sizeHTTPimage = historicHalfSizeX * historicHalfSizeY * 4 * 3;
+	pMapHTTP = static_cast<unsigned char*>(malloc(sizeHTTPimage)); //http map buffer
 
+	threads_stop = false;
+	debug_ip_server(8080, &threads_stop, &tcpip_map_used, pMapHTTP, sizeHTTPimage, historicHalfSizeX * 2, historicHalfSizeY * 2);
 
-    argc2 = argc;
-    argv2 = argv;
+	pthread_t depth_t;
 
-    /**===================================================**/
-    /**ALL ABOUT INITIALIZING THE CONNECTION WITH KINECT!!**/
-    /**===================================================**/
-    pDepthDisplay = static_cast<uint16_t*>(malloc(sizeDepth));
-    pDepthFeed = static_cast<char*>(malloc(sizeVideo));//used to rgb display what the kinect sees
-    pDepth = static_cast<uint16_t*>(malloc(sizeDepth));//each point is a uint16_t for depth
-    pMapFeed = static_cast<char*>(malloc(sizeVideo));
-    pVideo = static_cast<char*>(malloc(sizeVideo));//each point needs 3 chars to represent the color there (r255,g255,b255)
-    
-    sizeHTTPimage=historicHalfSizeX * historicHalfSizeY *4*3;
-    pMapHTTP = static_cast<unsigned char*>(malloc( sizeHTTPimage)); //http map buffer
+	int user_device_number = 0;
+	while (!(*async_stop_flag))
+	{
+		while (!(*async_stop_flag))
+		{
+			if (freenect_init(&f_ctx, NULL) < 0)
+			{
+				cout << "\nFreenect_init() failed.(1)";
+				return false;
+			}
+			freenect_set_log_level(f_ctx, FREENECT_LOG_DEBUG);
 
-    debug_ip_server(8080, &threads_stop, &tcpip_map_used, pMapHTTP, sizeHTTPimage, historicHalfSizeX*2, historicHalfSizeY*2);
+			while (!(*async_stop_flag))
+			{
+				int nr_devices = freenect_num_devices(f_ctx);
+				cout << "\nNumber of devices found: " << nr_devices;
 
-    if(freenect_init(&f_ctx, NULL) < 0)
-    {
-        cout << "\nFreenect_init() failed.(1)";
-        return 1;
-    }
-    freenect_set_log_level(f_ctx, FREENECT_LOG_DEBUG);
-    int nr_devices = freenect_num_devices(f_ctx);
-    cout << "\nNumber of devices found: " << nr_devices;
-    int user_device_number = 0;
-    if(argc > 1)
-    {
-        /**SELECT WHICH DEVICE!**/
-        user_device_number = atoi(argv[1]);
-    }
-    if(nr_devices < 1)
-    {
-        cout << "\nNo devices found.(2)";
-        return 2;
-    }
-    if(freenect_open_device(f_ctx, &f_dev, user_device_number) < 0)
-    {
-        cout << "\nCould not open device.(3)";
-        return 3;
-    }
-    else
-        cout << "\nOpened a device.";
+				if (nr_devices < 1)
+					cout << "\nNo devices found.(2)";
+				else
+					break;
+				sleep(2);
+			}
+			if (freenect_open_device(f_ctx, &f_dev, user_device_number) < 0)
+			{
+				cout << "\nCould not open device.(3)";
+			}
+			else
+			{
+				cout << "\nOpened a device.";
+				break;
+			}
+			user_device_number++;
+			if (user_device_number > 10)user_device_number = 0;
+			freenect_shutdown(f_ctx);
+			cout << "\nFreenect initialization failed. Trying device " << user_device_number << "\n";
+		}
 
+		if (!(*async_stop_flag))
+		{
+			/**THREADS TO SIMULTANEOUSLY RUN THE SENSOR INPUT AND COMPUTATION**/
+			pthread_t kinect_t;
+			threads_stop_depth = false;
+			int kinect = pthread_create(&kinect_t, NULL, thread_kinect, NULL);
+			int map = pthread_create(&depth_t, NULL, thread_depth, NULL);
+			/**MAKE SURE THEY WERE CREATED**/
+			if (kinect || map)
+			{
+				cout << "\nPThread_create failed.(5)\n";
+				return false;
+			}
 
-    /**THREADS TO SIMULTANEOUSLY RUN THE SENSOR INPUT AND COMPUTATION**/
-    pthread_t kinect_t;
-    pthread_t depth_t;
-    pthread_t chessboard_t;
-    //pthread_t display_t;
-    int chessboard = pthread_create(&chessboard_t, NULL, thread_chessboard, NULL);
-    int kinect = pthread_create(&kinect_t, NULL, thread_kinect, NULL);
-    int map = pthread_create(&depth_t, NULL, thread_depth, NULL);
-    int display = 0;// pthread_create(&display_t, NULL, thread_display, NULL);
-    /**MAKE SURE THEY WERE CREATED**/
-    if(kinect or map or chessboard or display)
-    {
-        cout << "\nPThread_create failed.(5)";
-        return 5;
-    }
-    /**LOOP IN MAIN UNTIL WE DECIDE TO STOP**/
-    while(not main_stop)//this loops while the other threads do things like depth callback
-    {
-        sleep(1);
-        //cout << "\nMain.";
-        /*cin >> userChoice;
-        if(userChoice == 's')
-            threads_stop = true;
-        if(userChoice == 'q')
-            main_stop = true;*/
-    }
-    threads_stop = true;
+			while (!(*async_stop_flag))
+			{
+				//need watchdog
+				got_data_kinect = false;
+				sleep(5);
+				if(!got_data_kinect)
+					break; //restart all
+			}
+
+			threads_stop_depth = true;
+			pthread_join(kinect_t, 0);
+			threads_stop_depth = false;
+
+			freenect_shutdown(f_ctx);
+		}
+	}
+	threads_stop = true;
+	pthread_join(depth_t, 0);
 
     free(pDepthDisplay);
     free(pDepthFeed);
@@ -529,6 +503,5 @@ int main(int argc, char **argv)
     free(pDepth);
     free(pVideo);
 
-    cout << "\nExit Success.(0)";
     return 0;
 }
