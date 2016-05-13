@@ -170,7 +170,7 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
 
             vector<Point2f> pointBuf;
 
-            bool found = findChessboardCorners(view, boardSize
+            bool found = findChessboardCorners(view, boardSize,
                     pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE);
 
             if (found)                // If done with success,
@@ -283,7 +283,7 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
                     }
 
                 }
-                else cout << "Wrong pattern size!";
+                //else cout << "Wrong pattern size!";
             }
             else
             {
