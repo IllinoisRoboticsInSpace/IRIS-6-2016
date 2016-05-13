@@ -16,7 +16,7 @@ float RawDepthToMilli(int depthValue)
 
 
 /**screen style coordinates, 0,0 top left; 639,0 top right; 639,479 bottom right;**/
-int GetCoord(int x, int y)
+int GetIndex(int x, int y)
 {
     return (x+y*dimX);
 }
@@ -37,13 +37,13 @@ Vec2f GetAngle(int x, int y)
 Vec3f GetCartCoord(int x, int y, const uint16_t* pDepth)
 {
     Vec3f cartesian;
-    float distance = RawDepthToMilli(pDepth[GetCoord(x,y)]);//r in millimeters
+    float distance = RawDepthToMilli(pDepth[GetIndex(x,y)]);//r in millimeters
 
     Vec2f azmuthPolar(GetAngle(x,y));//theta is CCW angle from +X, Phi is angle from ZY plane
 
     cartesian.x = distance;
-    cartesian.y = distance*tanL(azmuthPolar.x);
-    cartesian.z = distance*tanL(-azmuthPolar.y+pi2);
+    cartesian.y = distance*tan(azmuthPolar.x);
+    cartesian.z = distance*tan(-azmuthPolar.y+pi2);
 
     return cartesian;
 }

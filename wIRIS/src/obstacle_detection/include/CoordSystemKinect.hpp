@@ -4,7 +4,7 @@
 #ifndef COORDSYSTEMKINECT_HPP
 #define COORDSYSTEMKINECT_HPP
 
-#include "TrigLookup.hpp"//used for sinL
+#include <math.h>
 #include "Linear.hpp"
 #include <stdint.h>//used for uint16_t
 
@@ -12,8 +12,8 @@ namespace csk
 {
 
 /**EVERTHING IS IN RADIANS**/
-const float pi = 3.1415926;
-const float pi2 = pi/2.0;
+const float pi = M_PI;
+const float pi2 = M_PI/2.0;
 
 const float fovX = 57*pi/180.0;
 const float fovY = 43*pi/180.0;
@@ -30,7 +30,7 @@ const float dimY2 = dimY/2.0;
 float RawDepthToMilli(int depthValue);
 
 /**screen style coordinates, 0,0 top left; 639,0 top right; 639,479 bottom right;**/
-int GetCoord(int x, int y);
+int GetIndex(int x, int y);
 
 /**get the x and y angle of the ray(used by spherical coordinate system)**/
 Vec2f GetAngle(int x, int y);

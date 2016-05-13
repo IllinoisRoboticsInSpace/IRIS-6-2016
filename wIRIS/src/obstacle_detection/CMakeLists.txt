@@ -136,7 +136,7 @@ include_directories(
 # add_dependencies(obstacle_detection ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(computer_display src/main_opengl.cpp src/CoordSystemKinect.cpp src/TrigLookup.cpp src/checkboard_navigation_module.cpp include/CoordSystemKinect.hpp include/Linear.hpp include/Map.hpp include/TrigLookup.hpp include/debug_ip_server.h include/checkboard_navigation_module.h include/claibinit_mod.h src/debug_ip_server.cpp)
+add_executable(computer_display src/main.cpp src/kinect_obstacle_module.cpp src/CoordSystemKinect.cpp src/TrigLookup.cpp src/checkboard_navigation_module.cpp include/CoordSystemKinect.hpp include/Linear.hpp include/Map.hpp include/TrigLookup.hpp include/debug_ip_server.h include/checkboard_navigation_module.h include/claibinit_mod.h src/debug_ip_server.cpp)
 rosbuild_add_compile_flags(computer_display `pkg-config libusb-1.0 --libs --cflags`)
 #rosbuild_add_compile_flags(computer_display -lusb -lfreenect -lserial -lGL -lGLU -lglut)
 rosbuild_add_link_flags(computer_display -lusb -lfreenect -L/opt/ros/hydro/lib -lserial -lGL -lGLU -lglut)
