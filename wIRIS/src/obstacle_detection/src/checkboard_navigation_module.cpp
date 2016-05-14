@@ -117,6 +117,10 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
 
         VideoCapture inputCapture; 
         inputCapture.open(camera_id); //OPEN CAMERA camera_id
+        inputCapture.set(CV_CAP_PROP_FRAME_WIDTH, 6400);
+        inputCapture.set(CV_CAP_PROP_FRAME_HEIGHT, 4800);
+        inputCapture.set(CV_CAP_PROP_FPS, 15);
+        sleep(0.200);
         if (!inputCapture.isOpened())
         {
             camera_id++;
@@ -126,13 +130,10 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
                 camera_id = 0;
             }
             cout << "WEBCAM ERROR retrying: ";
-            sleep(0.100);
             continue; // try next device
         }
 
-        inputCapture.set(CV_CAP_PROP_FRAME_WIDTH, 6400);
-        inputCapture.set(CV_CAP_PROP_FRAME_HEIGHT, 4800);
-        inputCapture.set(CV_CAP_PROP_FPS, 15);
+
 
         Mat cameraMatrix, distCoeffs;
         Size imageSize;
