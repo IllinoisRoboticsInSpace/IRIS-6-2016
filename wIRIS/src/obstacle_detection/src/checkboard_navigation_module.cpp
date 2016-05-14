@@ -120,11 +120,12 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
         if (!inputCapture.isOpened())
         {
             camera_id++;
-            if (camera_id > 64)
+            if (camera_id > 6)
             {
                 sleep(0.100);
                 camera_id = 0;
             }
+            cout << "WEBCAM ERROR retrying with device " << camera_id << endl;
             continue; // try next device
         }
 

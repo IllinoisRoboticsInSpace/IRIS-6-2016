@@ -433,7 +433,7 @@ void* init_kinect_mapping(void * stop_flag)
                 {
                         if (freenect_init(&f_ctx, NULL) < 0)
                         {
-                                cout << "\nFreenect_init() failed.(1)";
+                                cout << "Freenect_init() failed.(1)\n";
                                 return false;
                         }
                         freenect_set_log_level(f_ctx, FREENECT_LOG_DEBUG);
@@ -441,27 +441,27 @@ void* init_kinect_mapping(void * stop_flag)
                         while (!(*async_stop_flag))
                         {
                                 int nr_devices = freenect_num_devices(f_ctx);
-                                cout << "\nNumber of devices found: " << nr_devices;
+                                cout << "Number of KINECT devices found: " << nr_devices<<"\n";
 
                                 if (nr_devices < 1)
-                                        cout << "\nNo devices found.(2)";
+                                        cout << "\nKINECT No devices found.(2)";
                                 else
                                         break;
                                 sleep(2);
                         }
                         if (freenect_open_device(f_ctx, &f_dev, user_device_number) < 0)
                         {
-                                cout << "\nCould not open device.(3)";
+                                cout << "KINECT Could not open device.(3)\n";
                         }
                         else
                         {
-                                cout << "\nOpened a device.";
+                                cout << "KINECT Opened a device.\n";
                                 break;
                         }
                         user_device_number++;
                         if (user_device_number > 10)user_device_number = 0;
                         freenect_shutdown(f_ctx);
-                        cout << "\nFreenect initialization failed. Trying device " << user_device_number << "\n";
+                        cout << "Freenect KINECT initialization failed. Trying device " << user_device_number << "\n";
                 }
 
                 if (!(*async_stop_flag))
@@ -474,7 +474,7 @@ void* init_kinect_mapping(void * stop_flag)
                         /**MAKE SURE THEY WERE CREATED**/
                         if (kinect || map)
                         {
-                                cout << "\nPThread_create failed.(5)\n";
+                                cout << "KINECT PThread_create failed.(5)\n";
                                 return false;
                         }
 
@@ -484,7 +484,10 @@ void* init_kinect_mapping(void * stop_flag)
                                 got_data_kinect = false;
                                 sleep(5);
                                 if(!got_data_kinect)
-                                        break; //restart all
+                                {
+                                    cout << "KINECT ERROR watchdog is triggering restart\n";
+                                    break; //restart all
+                                }
                         }
 
                         threads_stop_depth = true;

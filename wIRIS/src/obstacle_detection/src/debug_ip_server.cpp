@@ -157,10 +157,61 @@ BITMAPFILEHEADER header;
 
 #pragma pack(pop)
 
-int write_uint32_t(int sock, uint32_t value)
+int write_uint32_t(std::string & s, uint32_t value)
 {
-    return write(sock , &value , 4);
+    s.append((char*)&value , 4);
 }
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include "zlib.h"
+
+#define CHUNK 16384
+
+//Compress from sin to sout.
+//def() returns Z_OK on success, Z_MEM_ERROR if memory could not be
+//allocated for processing, Z_STREAM_ERROR if an invalid compression
+//level is supplied, Z_VERSION_ERROR if the version of zlib.h and the
+//version of the library linked do not match. 
+int deflate_string(const std::string & sin, std::string & sout, int level=Z_DEFAULT_COMPRESSION)
+{
+    int ret, flush;
+    unsigned have;
+    z_stream strm;
+    unsigned char out[CHUNK];
+
+    /* allocate deflate state */
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    ret = deflateInit(&strm, level);
+    if (ret != Z_OK)
+        return ret;
+
+    /* compress until end of file */
+    strm.avail_in = sin.length();
+    flush = Z_FINISH;  // to continue: Z_NO_FLUSH;
+    strm.next_in = sin.c_str();
+
+    /* run deflate() on input until output buffer not full, finish
+       compression if all of source has been read in */
+    do {
+        strm.avail_out = CHUNK;
+        strm.next_out = out;
+        ret = deflate(&strm, flush);    /* no bad return value */
+        assert(ret != Z_STREAM_ERROR);  /* state not clobbered */
+        have = CHUNK - strm.avail_out;
+        sout+=std::string(out,have);
+    } while (strm.avail_out == 0);
+    assert(strm.avail_in == 0);     /* all input will be used */
+    assert(ret == Z_STREAM_END);        /* stream will be complete */
+
+    /* clean up and return */
+    (void)deflateEnd(&strm);
+    return Z_OK;
+}
+
 
 /*
  * This will handle connection for each client
@@ -168,7 +219,7 @@ int write_uint32_t(int sock, uint32_t value)
 void *connection_handler(void * pointer)
 {
     data_connection & data_pointer= *(data_connection*)pointer;
-    unsigned char * data=data_pointer.data;
+    unsigned char * data_buffer=data_pointer.data;
     size_t length=data_pointer.length;
     size_t width=data_pointer.width;
     size_t height=data_pointer.height;
@@ -236,43 +287,29 @@ void *connection_handler(void * pointer)
         return 0;
     }
 
-    //Reply to the client
-    message = "HTTP/1.1 200 OK\r\n"
-            "Accept-Ranges: none\r\n"
-            "Content-Length: ";
-    write(sock , message , strlen(message));
-    sprintf(buffer,"%d",total_size);
-    write(sock , buffer , strlen(buffer));
-    message = "\r\n"
-            "Keep-Alive: Off\r\n"
-            "Connection: Close\r\n"
-            "Content-Type: image/bmp\r\n"
-            "Pragma: no-cache\r\n"
-            "Cache-Control: no-cache\r\n"
-            "Refresh: 2;url=?\r\n"
-            "\r\n"
-            "BM";
-    write(sock , message , strlen(message));
+
+    std::string data="BM";
+    
     
     // file size
-    write_uint32_t(sock , total_size );
+    write_uint32_t(data , total_size );
 
     // reserved field (in hex. 00 00 00 00)
-    write_uint32_t(sock , 0);
+    write_uint32_t(data , 0);
 
     // offset of pixel data inside the image
-    write_uint32_t(sock , 54);
+    write_uint32_t(data , 54);
     
     // -- BITMAP HEADER -- //
 
     // header size
-    write_uint32_t(sock , 40 );
+    write_uint32_t(data , 40 );
 
     // width of the image
-    write_uint32_t(sock , width );
+    write_uint32_t(data , width );
 
     // height of the image
-    write_uint32_t(sock , height );
+    write_uint32_t(data , height );
 
     // reserved field
     buffer[0] = 1;
@@ -281,13 +318,13 @@ void *connection_handler(void * pointer)
     // number of bits per pixel
     buffer[2] = 24; // 3 byte
     buffer[3] = 0;
-    write(sock , buffer , 4);
+    data.append( buffer , 4);
     
     // compression method (no compression here)
-    write_uint32_t(sock , 0 );
+    write_uint32_t(data , 0 );
 
     // size of pixel data
-    write_uint32_t(sock , bitmap_size );
+    write_uint32_t(data , bitmap_size );
 
     // horizontal resolution of the image - pixels per meter (2835)
     buffer[0] = 0;
@@ -300,22 +337,43 @@ void *connection_handler(void * pointer)
     buffer[5] = 0;
     buffer[6] = 0b00110000;
     buffer[7] = 0b10110001;
-    write(sock , buffer , 8);
+    data.append(  buffer , 8);
 
     // color pallette information
-    write_uint32_t(sock , 0 );
+    write_uint32_t(data , 0 );
 
     // number of important colors
-    write_uint32_t(sock , 0 );
+    write_uint32_t(data , 0 );
     
-    write(sock , data , length);
+    data.append( data_buffer , length);
     
+    *read_image=true;
+    
+    std::string output;
+    
+    deflate_string(data,output);
+    
+    //Reply to the client
+    message = "HTTP/1.1 200 OK\r\n"
+            "Accept-Ranges: none\r\n"
+            "Content-Length: ";
+    write(sock , message , strlen(message));
+    sprintf(buffer,"%d",output.length());
+    write(sock , buffer , strlen(buffer));
+    message = "\r\n"
+            "Keep-Alive: Off\r\n"
+            "Connection: Close\r\n"
+            "Content-Type: image/bmp\r\n"
+            "Content-Encoding: deflate\r\n"
+            "Pragma: no-cache\r\n"
+            "Cache-Control: no-cache\r\n"
+            "Refresh: 2;url=?\r\n"
+            "\r\n";    
+    write(sock , message , strlen(message));
+    write(sock , output.c_str() , output.length());
     sleep(5);
-    
     shutdown(sock,SHUT_RDWR);
     close(sock);
-    *read_image=true;
-
 }
 
 
