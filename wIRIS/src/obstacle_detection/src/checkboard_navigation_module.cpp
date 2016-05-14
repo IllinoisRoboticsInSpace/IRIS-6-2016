@@ -84,7 +84,11 @@ bool nextImage(VideoCapture & inputCapture, Mat & result, long * millis_timestam
         if (millis() - j > 10)
             break;
     }
-    inputCapture.retrieve(result);
+    if (!inputCapture.retrieve(result))
+    {
+        cout << "WEBCAM IMAGE GRAB FAILED eventually trying to restart\n";
+        return false;
+    }
 
     //cout<<"CV_CAP_PROP_POS_MSEC: " << convertToEpoch(inputCapture.get(CV_CAP_PROP_POS_MEC)) <<"\n" <<
           //"CV_CAP_PROP_POS_FRAMES: "<< (long)inputCapture.get(CV_CAP_PROP_POS_FRAMES) << "\n" <<  // <-- the v4l2 'sequence' field
