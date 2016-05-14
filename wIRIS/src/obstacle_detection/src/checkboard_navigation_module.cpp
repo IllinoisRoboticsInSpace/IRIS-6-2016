@@ -125,12 +125,12 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
     float squareSize =4.13;//CHANGE HERE THE SHAPE  OF SQUARES
 
     int camera_id = 0;
+    VideoCapture inputCapture;
 
     for (int re_connect_retries = 0;!(*stop_flag);++re_connect_retries)
     {
         cout << "Initializing webcam navigation with device " << camera_id << endl;
 
-        VideoCapture inputCapture; 
         inputCapture.open(camera_id); //OPEN CAMERA camera_id
         inputCapture.set(CV_CAP_PROP_FRAME_WIDTH, 6400);
         inputCapture.set(CV_CAP_PROP_FRAME_HEIGHT, 4800);
