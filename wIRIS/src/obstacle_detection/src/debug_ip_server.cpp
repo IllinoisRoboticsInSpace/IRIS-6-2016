@@ -193,7 +193,7 @@ int deflate_string(const std::string & sin, std::string & sout, int level=Z_DEFA
     /* compress until end of file */
     strm.avail_in = sin.length();
     flush = Z_FINISH;  // to continue: Z_NO_FLUSH;
-    strm.next_in = sin.c_str();
+    strm.next_in = (unsigned char*) sin.c_str();
 
     /* run deflate() on input until output buffer not full, finish
        compression if all of source has been read in */
@@ -203,7 +203,7 @@ int deflate_string(const std::string & sin, std::string & sout, int level=Z_DEFA
         ret = deflate(&strm, flush);    /* no bad return value */
         assert(ret != Z_STREAM_ERROR);  /* state not clobbered */
         have = CHUNK - strm.avail_out;
-        sout+=std::string(out,have);
+        sout+=std::string((char *)out,have);
     } while (strm.avail_out == 0);
     assert(strm.avail_in == 0);     /* all input will be used */
     assert(ret == Z_STREAM_END);        /* stream will be complete */
@@ -346,7 +346,7 @@ void *connection_handler(void * pointer)
     // number of important colors
     write_uint32_t(data , 0 );
     
-    data.append( data_buffer , length);
+    data.append( (char *) data_buffer , length);
     
     *read_image=true;
     
