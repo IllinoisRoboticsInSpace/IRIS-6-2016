@@ -368,7 +368,7 @@ void *connection_handler(void * pointer)
             "Content-Encoding: deflate\r\n"
             "Pragma: no-cache\r\n"
             "Cache-Control: no-cache\r\n"
-            "Refresh: 2;url=?\r\n"
+            "Refresh: 0.5;url=?\r\n"
             "\r\n";    
     write(sock , message , strlen(message));
     write(sock , output.c_str() , output.length());
