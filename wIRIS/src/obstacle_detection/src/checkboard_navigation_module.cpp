@@ -73,8 +73,10 @@ long convertToEpoch(long v4l_ts_ms) {
 
 bool nextImage(VideoCapture & inputCapture, Mat & result, long * millis_timestamp=0)
 {
+    int count_trials=0;
     for (long i = millis();millis() - i < 20;)//stay 20 ms discarding frames to ensure we get a current frame at the end
     {
+        count_trials++;
         long j = millis();
         if (!inputCapture.grab())
         {
@@ -86,6 +88,11 @@ bool nextImage(VideoCapture & inputCapture, Mat & result, long * millis_timestam
             cout<<"took new image in "<<millis()-j<<" millis\n";
             break;
         }
+    }
+    if(count_trials>180) //too quick to be really getting pictures, reset camera!
+    {
+        cout << "WEBCAM IMAGE GRAB IS GOING NUTS - ERROR, eventually trying to restart\n";
+        return false;
     }
     cout<<"have new image \n";
     if (!inputCapture.retrieve(result))
