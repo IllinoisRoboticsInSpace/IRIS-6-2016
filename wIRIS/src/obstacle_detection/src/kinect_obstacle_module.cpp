@@ -444,7 +444,7 @@ void* init_kinect_mapping(void * stop_flag)
                                 cout << "Number of KINECT devices found: " << nr_devices<<"\n";
 
                                 if (nr_devices < 1)
-                                        cout << "\nKINECT No devices found.(2)";
+                                        cout << "KINECT No devices found.(2)\n";
                                 else
                                         break;
                                 sleep(2);
@@ -459,7 +459,11 @@ void* init_kinect_mapping(void * stop_flag)
                                 break;
                         }
                         user_device_number++;
-                        if (user_device_number > 10)user_device_number = 0;
+                        if (user_device_number > 6)
+                        {
+                            user_device_number = 0;
+                            sleep(2);
+                        }
                         freenect_shutdown(f_ctx);
                         cout << "Freenect KINECT initialization failed. Trying device " << user_device_number << "\n";
                 }
