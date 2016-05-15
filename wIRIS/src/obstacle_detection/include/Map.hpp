@@ -70,6 +70,22 @@ public:
         nx=0;ny=0;
         create(ax,bx,ay,by);
     }
+    int xllim()
+    {
+        return -dx;
+    }
+    int xhlim()
+    {
+        return -dx+nx;
+    }
+    int yllim()
+    {
+        return -dy;
+    }
+    int yhlim()
+    {
+        return -dy+ny;
+    }
 #if _DEBUG
     T & operator() (int ax,int ay)
     {
@@ -82,6 +98,22 @@ public:
     }
 #else
     T & operator() (int ax,int ay)
+    {
+        return g[ax+nx*ay];
+    }
+#endif
+#if _DEBUG
+    const T & operator() (int ax,int ay) const
+    {
+        int kx=ax+dx;int ky=ay+dy;
+        ASSERT(kx<nx);
+        ASSERT(ky<ny);
+        ASSERT(kx>=0);
+        ASSERT(ky>=0);
+        return d[kx+nx*ky];
+    }
+#else
+    const T & operator() (int ax,int ay) const
     {
         return g[ax+nx*ay];
     }
@@ -136,14 +168,14 @@ public:
     }
 } ;
 
-typedef matrix_tag<double> MATRIX;
+typedef matrix_tag<float> MATRIX;
 typedef matrix_tag<unsigned char> MAT_GRAYSCALE;
 typedef matrix_tag<unsigned char[3]> MAT_RGB;
 
 const float map_defaultValue = -9999.0f;//default value of map pieces, DO NOT REFERENCE THIS
 const float map_occupied = 1;
 const float map_unoccupied = 0;
-const float map_unknown = startValue;
+const float map_unknown = map_defaultValue;
 
 /**======================**/
 /**TELLS US THE STEEPNESS FACTOR OF A PIECE OF TERRAIN BY COMPARING THE HEIGHT OF ADJACENT PIECES**/
@@ -181,9 +213,9 @@ void makeGradient(MATRIX & output, const MATRIX& input, const float tolerance)//
 {
     
     //const float tolerance = 0.5f;
-    for(int y = -m_halfSize.x; y <= m_halfSize.y; ++y)
+    for(int y = input.yllim()+1; y < input.yhlim()-1; ++y)
     {
-        for(int x = -m_halfSize.x; x <= m_halfSize.x; ++x)
+        for(int x = input.xllim()+1; x < input.xhlim()-1; ++x)
         {
             if(input(x,y) != map_defaultValue)//get the point, and all points around it!
                 output(x,y) = f_isSteep(input(x  , y  ),
