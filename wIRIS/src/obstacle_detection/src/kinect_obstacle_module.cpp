@@ -196,6 +196,7 @@ bool  SerialConnect(serial::Serial & ser)
 void* thread_depth(void* arg)
 {
     MATRIX historic(-historicHalfSizeX,historicHalfSizeX, 0, historicSizeY);
+    historic.fill(map_defaultValue);
 
     while(not threads_stop)
     {
@@ -207,6 +208,8 @@ void* thread_depth(void* arg)
             const int pointCount = csk::dimX*csk::dimY;
             MATRIX gradient(-gradientHalfSizeX,gradientHalfSizeX, -gradientHalfSizeY,gradientHalfSizeY);
             MATRIX height(-gradientHalfSizeX,gradientHalfSizeX, -gradientHalfSizeY,gradientHalfSizeY);
+            gradient.fill(map_defaultValue);
+            height.fill(map_defaultValue);
 
             vector<Vec3f> pointCloud;
             pointCloud.resize(csk::dimX*csk::dimY);//make our pointcloud large enough
