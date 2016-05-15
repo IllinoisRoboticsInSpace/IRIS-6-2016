@@ -284,7 +284,7 @@ void* thread_depth(void* arg)
                 {
                     int x = i/3;
                     int px =x%(historicHalfSizeX*2)-historicHalfSizeX;
-                    int py =x/(historicSizeY*2);
+                    int py =x/(historicHalfSizeX*2);
                     float val = historic( px,py );
                     if(px==0 || py==0) //Mark axis
                     {
