@@ -135,7 +135,6 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
         inputCapture.set(CV_CAP_PROP_FRAME_WIDTH, 6400);
         inputCapture.set(CV_CAP_PROP_FRAME_HEIGHT, 4800);
         inputCapture.set(CV_CAP_PROP_FPS, 15);
-        sleep(0.200);
         if (!inputCapture.isOpened())
         {
             camera_id++;
@@ -144,6 +143,7 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
                 sleep(3);
                 camera_id = 0;
             }
+            sleep(0.200);
             cout << "WEBCAM ERROR retrying: ";
             continue; // try next device
         }
