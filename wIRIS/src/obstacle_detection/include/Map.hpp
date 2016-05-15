@@ -9,258 +9,191 @@
 #include <fstream>//filestream
 #include <stdlib.h>//abs
 
-static const float startValue = -9999.0f;//default value of map pieces, DO NOT REFERENCE THIS
+#include <memory.h>
+
+#if _DEBUG
+    #define ASSERT(x) if(!(x)) DebugBreak()
+#else
+    #define ASSERT(x) 
+#endif
+
+template<typename T> struct matrix_tag
+{
+public:
+    matrix_tag(matrix_tag & m)
+    {
+        d=0;
+        nx=0;ny=0;
+        *this=m;
+    }
+    matrix_tag()
+    {
+        d=0;
+        nx=0;ny=0;
+    }
+    int dx,dy;
+    matrix_tag(int width, int height)
+    {
+        d=0;
+        nx=0;ny=0;
+        create(width,height);
+    }
+private:
+    int nx,ny;
+    T* d;
+    T* g;
+public:
+    void create(int ax,int bx,int ay,int by)
+    {
+        int oldsize=nx*ny;
+        dx=-ax;dy=-ay;
+        nx=bx-ax+1;ny=by-ay+1;
+        ASSERT(nx>0);
+        ASSERT(ny>0);
+        int newsize=nx*ny;
+        if(d && oldsize!=newsize)
+        {
+            delete[] d;
+            d=0;
+        }
+        if(!d)
+            d=new T [newsize];
+        g=d+dx+nx*dy;
+    }
+    void create(int width, int height)
+    {
+        create(0,width-1,0,height-1);
+    }
+    matrix_tag(int ax,int bx,int ay,int by)
+    {
+        d=0;
+        nx=0;ny=0;
+        create(ax,bx,ay,by);
+    }
+#if _DEBUG
+    T & operator() (int ax,int ay)
+    {
+        int kx=ax+dx;int ky=ay+dy;
+        ASSERT(kx<nx);
+        ASSERT(ky<ny);
+        ASSERT(kx>=0);
+        ASSERT(ky>=0);
+        return d[kx+nx*ky];
+    }
+#else
+    T & operator() (int ax,int ay)
+    {
+        return g[ax+nx*ay];
+    }
+#endif
+    matrix_tag & operator= (const matrix_tag & m)
+    {
+        if(d && nx*ny!=m.nx*m.ny)
+        {
+            delete[] d;
+            d=0;
+        }
+        if(!d)
+            d=new T [m.nx*m.ny];
+        nx=m.nx;
+        ny=m.ny;
+        dx=m.dx;
+        dy=m.dy;
+        g=d+dx+nx*dy;
+        memcpy(d,m.d,nx * ny * sizeof(T));
+        return *this;
+    }
+    int xSize()
+    {
+        return nx;
+    }
+    int ySize()
+    {
+        return ny;
+    }
+    operator void*()
+    {
+        return (void*)d;
+    }
+    T* data()
+    {
+        return d;
+    }
+    void zeroMem()
+    {
+        memset(d,0,nx * ny * sizeof(T));
+    }
+    ~matrix_tag()
+    {
+        if(d)
+            delete[] d;
+        d=0;
+    }
+    void fill(T val)
+    {
+        for(int i=0;i<nx*ny;i++)
+            d[i]=val;
+    }
+} ;
+
+typedef matrix_tag<double> MATRIX;
+typedef matrix_tag<unsigned char> MAT_GRAYSCALE;
+typedef matrix_tag<unsigned char[3]> MAT_RGB;
+
+const float map_defaultValue = -9999.0f;//default value of map pieces, DO NOT REFERENCE THIS
 const float map_occupied = 1;
 const float map_unoccupied = 0;
 const float map_unknown = startValue;
-//use defaultValue when in the map class
 
+/**======================**/
+/**TELLS US THE STEEPNESS FACTOR OF A PIECE OF TERRAIN BY COMPARING THE HEIGHT OF ADJACENT PIECES**/
+/**======================**/
 template <typename T>
-struct HeightData
+int f_isSteep(T origin, T up, T left, T down, T right, T tolerance)//written by Max Archer 9/17/2014
 {
-    HeightData(T defaultValue = startValue) :
-        value(defaultValue)
+    if(origin!=map_defaultValue)
     {
+        if(up==map_defaultValue)
+            up = origin;
+        if(left==map_defaultValue)
+            left = origin;
+        if(down==map_defaultValue)
+            down = origin;
+        if(right==map_defaultValue)
+            right = origin;
+
+        if(up-origin >= tolerance || origin-up >= tolerance)
+            return map_occupied;
+        else if(left-origin >= tolerance || origin-left >= tolerance)
+            return map_occupied;
+        else if(down-origin >= tolerance || origin-down >= tolerance)
+            return map_occupied;
+        else if(right-origin >= tolerance || origin-right >= tolerance)
+            return map_occupied;
     }
+    return map_unoccupied;
+}
 
-    //int reliability;//how reliable is this data
-    T value;
-};
-
-template <typename T>
-class Map
+/**======================**/
+/**Uses the input map to produce a gradient of this map**/
+/**======================**/
+void makeGradient(MATRIX & output, const MATRIX& input, const float tolerance)//takes a map and gives it the gradient data
 {
-public:
-    /**HALF SIZE OF 2 PRODUCES 5x5 map, because middle row**/
-    Map(const Vec2i& rHalfSize) : defaultValue(startValue)//double checked
+    
+    //const float tolerance = 0.5f;
+    for(int y = -m_halfSize.x; y <= m_halfSize.y; ++y)
     {
-        nullRep = '-';
-        minValue = 0;
-        maxValue = 9;
-
-        m_halfSize = rHalfSize;
-        m_origin.x = rHalfSize.x;//not plus 1 because indexing!
-        m_origin.y = rHalfSize.y;
-
-        m_cells.resize(2*rHalfSize.x+1);//make x dimension
-        for(typename std::vector<std::vector<HeightData<T> > >::iterator it = m_cells.begin(); it != m_cells.end(); ++it)//make y dimension
-            it->resize(2*rHalfSize.y+1);
-    }
-    /**======================**/
-    /**Returns a point in the map using standard 2D cartesian coordinates**/
-    /**======================**/
-    HeightData<T>& getPoint(const Vec2i& rCoord)//returns reference to cell, so reading AND writing!
-    {
-        if((abs(rCoord.x) <= m_halfSize.x) && (abs(rCoord.y) <= m_halfSize.y))
-            return m_cells[m_origin.x+rCoord.x][(m_origin.y+rCoord.y)];
-        else
-            return m_garbage;
-    }
-    /**======================**/
-    /**Uses the input map to produce a gradient of this map**/
-    /**======================**/
-    void makeGradient(Map& rMap, const float tolerance)//takes a map and gives it the gradient data
-    {
-        //const float tolerance = 0.5f;
-        for(int y = -m_halfSize.x; y <= m_halfSize.y; ++y)
+        for(int x = -m_halfSize.x; x <= m_halfSize.x; ++x)
         {
-            for(int x = -m_halfSize.x; x <= m_halfSize.x; ++x)
-            {
-                if(getPoint(Vec2i(x,y)).value != defaultValue)//get the point, and all points around it!
-                    rMap.getPoint(Vec2i(x,y)).value = f_isSteep(getPoint(Vec2i(x  , y  )).value,
-                                                      getPoint(Vec2i(x  , y+1)).value,
-                                                      getPoint(Vec2i(x  , y-1)).value,
-                                                      getPoint(Vec2i(x-1, y  )).value,
-                                                      getPoint(Vec2i(x+1, y  )).value,
-                                                      tolerance);
-            }
+            if(input(x,y) != map_defaultValue)//get the point, and all points around it!
+                output(x,y) = f_isSteep(input(x  , y  ),
+                                        input(x  , y+1),
+                                        input(x  , y-1),
+                                        input(x-1, y  ),
+                                        input(x+1, y  ),
+                                        tolerance);
         }
     }
-    /**======================**/
-    /**Takes the values in the map and fits them between max and min**/
-    /**======================**/
-    void normalizeMap()//take all the cells and put them to values between 0 and 9 (used for human viewing)
-    {
-        const int width = m_halfSize.x*2+1;
-        const int length = m_halfSize.y*2+1;
-
-        for(int y = 0; y<length; ++y)
-        {
-            for(int x = 0; x<width; ++x)
-            {
-                if(m_cells[x][y].value != defaultValue)
-                    if(m_cells[x][y].value > maxValue)
-                        m_cells[x][y].value = maxValue;
-            }
-        }
-        for(int y = 0; y<length; ++y)
-        {
-            for(int x = 0; x<width; ++x)
-            {
-                if(m_cells[x][y].value != defaultValue)
-                    if(m_cells[x][y].value < minValue)
-                        m_cells[x][y].value = minValue;
-            }
-        }
-    }
-    /**======================**/
-    /**THIS FUNCTION PRINTS THE MAP TO A FILE**/
-    /** it makes sure it doesn't print anything below a min value, **/
-    /**======================**/
-    void toFile(const std::string& rFileName)
-    {
-        std::ofstream file(rFileName.c_str());
-        if(file.is_open())
-        {
-            for(int y = -m_halfSize.x; y <= m_halfSize.y; ++y)
-            {
-                for(int x = -m_halfSize.x; x <= m_halfSize.x; ++x)
-                {
-                    int val = static_cast<int>(getPoint(Vec2i(x,y)).value);
-                    if(val == defaultValue)
-                    {
-                        file << nullRep;//we write two of each because that is aproximately a square in a text file, otherwise it gets skewed
-                        file << nullRep;
-                    }
-                    else
-                    {
-                        file << val;
-                        file << val;
-                    }
-                }
-            }
-            file.close();
-        }
-        else
-            perror("Map Write Failed");
-    }
-    /**======================**/
-    /**PUTS DATA INTO CHAR ARRAY**/
-    /** it makes sure it doesn't print anything below a min value, **/
-    /**======================**/
-    void getData(std::vector<Vec3f>& rObstacles)
-    {
-        const T z = 0;
-        for(int y = -m_halfSize.x; y <= m_halfSize.y; ++y)//start at top row
-        {
-            for(int x = -m_halfSize.x; x <= m_halfSize.x; ++x)//scanning each row
-            {
-                int val = (getPoint(Vec2i(x,y)).value);
-                if(val == map_occupied)
-                    rObstacles.push_back(Vec3f(x, y, z));
-            }
-        }
-    }
-    /**======================**/
-    /**BITWISE AND WITH OTHER MAP**/
-    /** **/
-    /**======================**/
-    void andTogether(Map& rMap)
-    {
-        for(int y = -m_halfSize.x; y <= m_halfSize.y; ++y)
-        {
-            for(int x = -m_halfSize.x; x <= m_halfSize.x; ++x)
-            {
-                T thisVal = this->getPoint(Vec2i(x,y)).value;
-                T otherVal = rMap.getPoint(Vec2i(x,y)).value;
-
-                if((thisVal != defaultValue) && (otherVal != defaultValue))//get the point, and all points around it!
-                {
-                    this->getPoint(Vec2i(x,y)).value = (thisVal && otherVal);
-                }
-            }
-        }
-    }
-    /**======================**/
-    /**FILTER GROUP**/
-    /**if a cell doesnt have at least 1 around it, mark as 0 **/
-    /**======================**/
-    void filterNum(const int minNum)
-    {
-        for(int y = -m_halfSize.x; y <= m_halfSize.y; ++y)
-        {
-            for(int x = -m_halfSize.x; x <= m_halfSize.x; ++x)
-            {
-                HeightData<T>& rThisCell = getPoint(Vec2i(x,y));
-                if(rThisCell.value == map_occupied)
-                {
-                    int sum = 0;
-                    if(getPoint(Vec2i(x-1,y+1)).value == map_occupied)//upper left go CW
-                        ++sum;
-                    if(getPoint(Vec2i(x  ,y+1)).value == map_occupied)
-                        ++sum;
-                    if(getPoint(Vec2i(x+1,y+1)).value == map_occupied)
-                        ++sum;
-                    if(getPoint(Vec2i(x+1,y  )).value == map_occupied)
-                        ++sum;
-                    if(getPoint(Vec2i(x+1,y-1)).value == map_occupied)
-                        ++sum;
-                    if(getPoint(Vec2i(x  ,y-1)).value == map_occupied)
-                        ++sum;
-                    if(getPoint(Vec2i(x-1,y-1)).value == map_occupied)
-                        ++sum;
-                    if(getPoint(Vec2i(x-1,y  )).value == map_occupied)
-                        ++sum;
-                    if(sum >= minNum)
-                        continue;
-                    else
-                        rThisCell.value = 0;
-                }
-            }
-        }
-    }
-    /**======================**/
-    /**RESET ALL TO DEFAULT VALUES**/
-    /** **/
-    /**======================**/
-    void clear()
-    {
-        for(int y = -m_halfSize.x; y <= m_halfSize.y; ++y)
-        {
-            for(int x = -m_halfSize.x; x <= m_halfSize.x; ++x)
-            {
-                getPoint(Vec2i(x,y)).value = defaultValue;
-            }
-        }
-    }
-
-    char nullRep;//used by print to file to represent no data
-    T minValue;
-    T maxValue;
-    T defaultValue;
-private:
-    /**======================**/
-    /**TELLS US THE STEEPNESS FACTOR OF A PIECE OF TERRAIN BY COMPARING THE HEIGHT OF ADJACENT PIECES**/
-    /**======================**/
-    int f_isSteep(T origin, T up, T left, T down, T right, T tolerance)//written by Max Archer 9/17/2014
-    {
-        if(origin!=defaultValue)
-        {
-            if(up==defaultValue)
-                up = origin;
-            if(left==defaultValue)
-                left = origin;
-            if(down==defaultValue)
-                down = origin;
-            if(right==defaultValue)
-                right = origin;
-
-            if(up-origin >= tolerance || origin-up >= tolerance)
-                return map_occupied;
-            else if(left-origin >= tolerance || origin-left >= tolerance)
-                return map_occupied;
-            else if(down-origin >= tolerance || origin-down >= tolerance)
-                return map_occupied;
-            else if(right-origin >= tolerance || origin-right >= tolerance)
-                return map_occupied;
-        }
-        return map_unoccupied;
-    }
-
-    HeightData<T> m_garbage;
-    Vec2i m_halfSize;
-    Vec2i m_origin;
-    std::vector<std::vector<HeightData<T> > > m_cells;
-};
+}
 
 #endif // MAP_HPP

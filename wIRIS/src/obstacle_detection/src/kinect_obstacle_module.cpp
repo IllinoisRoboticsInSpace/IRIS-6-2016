@@ -47,8 +47,8 @@ const int maxViewDist = 2500;//millimeters
 const int minViewDist = 470;//millimeters
 const int gradientHalfSizeX = 80;
 const int gradientHalfSizeY = 80;
-const int historicHalfSizeX = 180;
-const int historicHalfSizeY = 180;
+const int historicHalfSizeX = 80;
+const int historicSizeY = 180;
 int sizeHTTPimage =0;
 const int sizeGradientMap = sizeof(int8_t)*((gradientHalfSizeX*2)+1)*((gradientHalfSizeY*2)+1);
 //csk namespace represents CoordinateSystemKinect
@@ -76,7 +76,6 @@ double distS(double a){return min(fmod2pi(a),M_PI-fmod2pi(a));}
 static uint16_t* pDepth = NULL;
 static char* pVideo = NULL;
 static char* pDepthFeed = NULL;
-static char* pMapFeed = NULL;
 static uint16_t* pDepthDisplay = NULL;
 static unsigned char* pMapHTTP = NULL;
 
@@ -91,8 +90,8 @@ freenect_device* f_dev;
 /**================================================================================**/
 void depth_cb(freenect_device* pDevice, void* v_depth, uint32_t timestamp)
 {
-        got_data_kinect = true;
-        //cout<<"data at depth!\n";
+    got_data_kinect = true;
+    //cout<<"data at depth!\n";
     if(depth_used)
     {
         memcpy(pDepth, v_depth, sizeDepth);
@@ -109,7 +108,7 @@ void depth_cb(freenect_device* pDevice, void* v_depth, uint32_t timestamp)
 /**================================================================================**/
 void video_cb(freenect_device* pDevice, void* v_video, uint32_t timestamp)
 {
-        //cout<<"data at video!\n size_video = "<<sizeVideo<<"\n";
+    //cout<<"data at video!\n size_video = "<<sizeVideo<<"\n";
     if(video_used)
     {
         memcpy(pVideo, v_video, sizeVideo);
@@ -196,7 +195,7 @@ bool  SerialConnect(serial::Serial & ser)
 /**================================================================================**/
 void* thread_depth(void* arg)
 {
-    Map<float> historic(Vec2i(historicHalfSizeX, historicHalfSizeY));
+    MATRIX historic(-historicHalfSizeX,historicHalfSizeX, 0, historicSizeY));
 
     while(not threads_stop)
     {
@@ -206,8 +205,8 @@ void* thread_depth(void* arg)
                 ROS_INFO("\nNo Data From Kinect Accelerometer!");
 
             const int pointCount = csk::dimX*csk::dimY;
-            Map<float> gradient(Vec2i(gradientHalfSizeX, gradientHalfSizeY));
-            Map<float> height(Vec2i(gradientHalfSizeX, gradientHalfSizeY));
+            MATRIX gradient(-gradientHalfSizeX,gradientHalfSizeX, -gradientHalfSizeY,gradientHalfSizeY);
+            MATRIX height(-gradientHalfSizeX,gradientHalfSizeX, -gradientHalfSizeY,gradientHalfSizeY);
 
             vector<Vec3f> pointCloud;
             pointCloud.resize(csk::dimX*csk::dimY);//make our pointcloud large enough
@@ -256,14 +255,7 @@ void* thread_depth(void* arg)
             /**REMOVE STRANGE VALUES FROM MAP**/
             const float cellStepTolerance = 0.5;//fraction of a cells size that a cell
             //can change in height and will be marked as steep afterward
-            height.makeGradient(gradient, cellStepTolerance);//tolerance
-            gradient.minValue = -1;
-            gradient.maxValue = 9;
-            gradient.nullRep = '-';
-            /**PUBLISH GRADIENT TO ROS TOPIC**/
-
-            const int xScale = 4;
-            const int yScale = 3;
+            makeGradient(gradient, height, cellStepTolerance);//tolerance
 
             int xPos=robot_pos.x/5; //position of the robot (true one)
             int yPos=robot_pos.y/5;
@@ -271,44 +263,16 @@ void* thread_depth(void* arg)
             if(millis()-robot_pos.millis<1000)
             {
                 //PROJECT COMPUTED GRADIENT INTO HISTORIC MAP //
-                for(int x_i =-gradientHalfSizeX ; x_i < gradientHalfSizeX; x_i++){
-                        for( int y_i = -gradientHalfSizeY ; y_i < gradientHalfSizeY ; y_i++){
-
-                        float val_i = gradient.getPoint(Vec2i(x_i,y_i)).value;
-                        if(val_i != -9999.0 &&
-                                        x_i+xPos>=-historicHalfSizeX && y_i+yPos>=-historicHalfSizeY &&
-                                        x_i+xPos < historicHalfSizeX && y_i+yPos < historicHalfSizeY)
-                                historic.getPoint(Vec2i(x_i+xPos,y_i+yPos)).value = val_i;
-                        }
-                }
-            }
-            
-            if(map_displayed)
-            {
-                for(int i=0; i<sizeVideo; i+=3)
+                for(int x_i =-gradientHalfSizeX ; x_i < gradientHalfSizeX; x_i++)
                 {
-                    int x = i/3;
-                    float val = historic.getPoint(Vec2i( (((x%csk::dimX))/xScale-gradientHalfSizeX), -((x/csk::dimY)/yScale -gradientHalfSizeY))).value;
-                    if(val == -9999.0)
+                    for( int y_i = -gradientHalfSizeY ; y_i < gradientHalfSizeY ; y_i++)
                     {
-                        pMapFeed[i+0] = 0;//red
-                        pMapFeed[i+1] = 0;//green
-                        pMapFeed[i+2] = 0;//blue
-                    }
-                    else if(val == 1)//it is an obstacle
-                    {
-                        pMapFeed[i+0] = 255;
-                        pMapFeed[i+1] = 0;
-                        pMapFeed[i+2] = 0;
-                    }
-                    else
-                    {
-                        pMapFeed[i+0] = 255;
-                        pMapFeed[i+1] = 255;
-                        pMapFeed[i+2] = 255;
+                        if(val_i != -9999.0 &&
+                                        x_i+xPos>=-historicHalfSizeX && y_i+yPos>=0 &&
+                                        x_i+xPos < historicHalfSizeX && y_i+yPos < historicSizeY)
+                            historic(x_i+xPos,y_i+yPos) = gradient(x_i,y_i);
                     }
                 }
-                map_displayed = false;
             }
             
             if(tcpip_map_used)
@@ -316,9 +280,9 @@ void* thread_depth(void* arg)
                 for(int i=0; i<sizeHTTPimage; i+=3)
                 {
                     int x = i/3;
-                    int px =(((x%(historicHalfSizeX*2)))-historicHalfSizeX);
-                    int py =-((x/(historicHalfSizeY*2)) -historicHalfSizeY);
-                    float val = historic.getPoint(Vec2i( px,py )).value;
+                    int px =x%(historicHalfSizeX*2)-historicHalfSizeX;
+                    int py =-x/(historicSizeY*2);
+                    float val = historic( px,py );
                     if(px==0 || py==0) //Mark axis
                     {
                         pMapHTTP[i+0] = 0;
@@ -415,14 +379,13 @@ void* init_kinect_mapping(void * stop_flag)
         pDepthDisplay = static_cast<uint16_t*>(malloc(sizeDepth));
         pDepthFeed = static_cast<char*>(malloc(sizeVideo));//used to rgb display what the kinect sees
         pDepth = static_cast<uint16_t*>(malloc(sizeDepth));//each point is a uint16_t for depth
-        pMapFeed = static_cast<char*>(malloc(sizeVideo));
         pVideo = static_cast<char*>(malloc(sizeVideo));//each point needs 3 chars to represent the color there (r255,g255,b255)
 
-        sizeHTTPimage = historicHalfSizeX * historicHalfSizeY * 4 * 3;
+        sizeHTTPimage = historicHalfSizeX * historicSizeY * 2 * 3;
         pMapHTTP = static_cast<unsigned char*>(malloc(sizeHTTPimage)); //http map buffer
 
         threads_stop = false;
-        debug_ip_server(8080, &threads_stop, &tcpip_map_used, pMapHTTP, sizeHTTPimage, historicHalfSizeX * 2, historicHalfSizeY * 2);
+        debug_ip_server(8080, &threads_stop, &tcpip_map_used, pMapHTTP, sizeHTTPimage, historicHalfSizeX * 2, historicSizeY );
 
         pthread_t depth_t;
 
@@ -506,7 +469,6 @@ void* init_kinect_mapping(void * stop_flag)
 
     free(pDepthDisplay);
     free(pDepthFeed);
-    free(pMapFeed);
     free(pDepth);
     free(pVideo);
 
