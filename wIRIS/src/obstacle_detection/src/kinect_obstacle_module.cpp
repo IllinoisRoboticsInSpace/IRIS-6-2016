@@ -195,7 +195,7 @@ bool  SerialConnect(serial::Serial & ser)
 /**================================================================================**/
 void* thread_depth(void* arg)
 {
-    MATRIX historic(-historicHalfSizeX,historicHalfSizeX, 0, historicSizeY));
+    MATRIX historic(-historicHalfSizeX,historicHalfSizeX, 0, historicSizeY);
 
     while(not threads_stop)
     {
@@ -249,8 +249,8 @@ void* thread_depth(void* arg)
             /**CONVERT POINT CLOUD INTO HEIGHT MAP**/
             for(int i = 0; i<pointCount; ++i)
             {
-                if(height.getPoint(Vec2i(pointCloud[i].x, pointCloud[i].y)).value < pointCloud[i].z)
-                    height.getPoint(Vec2i(pointCloud[i].x, pointCloud[i].y)).value = pointCloud[i].z;
+                if(height(pointCloud[i].x, pointCloud[i].y) < pointCloud[i].z)
+                    height(pointCloud[i].x, pointCloud[i].y) = pointCloud[i].z;
             }
             /**REMOVE STRANGE VALUES FROM MAP**/
             const float cellStepTolerance = 0.5;//fraction of a cells size that a cell
@@ -267,7 +267,7 @@ void* thread_depth(void* arg)
                 {
                     for( int y_i = -gradientHalfSizeY ; y_i < gradientHalfSizeY ; y_i++)
                     {
-                        if(val_i != -9999.0 &&
+                        if(gradient(x_i,y_i) != -9999.0 &&
                                         x_i+xPos>=-historicHalfSizeX && y_i+yPos>=0 &&
                                         x_i+xPos < historicHalfSizeX && y_i+yPos < historicSizeY)
                             historic(x_i+xPos,y_i+yPos) = gradient(x_i,y_i);

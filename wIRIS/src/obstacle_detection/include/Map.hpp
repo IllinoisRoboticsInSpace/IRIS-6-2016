@@ -70,19 +70,19 @@ public:
         nx=0;ny=0;
         create(ax,bx,ay,by);
     }
-    int xllim()
+    int xllim()const
     {
         return -dx;
     }
-    int xhlim()
+    int xhlim()const
     {
         return -dx+nx;
     }
-    int yllim()
+    int yllim()const
     {
         return -dy;
     }
-    int yhlim()
+    int yhlim()const
     {
         return -dy+ny;
     }
@@ -135,11 +135,11 @@ public:
         memcpy(d,m.d,nx * ny * sizeof(T));
         return *this;
     }
-    int xSize()
+    int xSize() const
     {
         return nx;
     }
-    int ySize()
+    int ySize() const
     {
         return ny;
     }
