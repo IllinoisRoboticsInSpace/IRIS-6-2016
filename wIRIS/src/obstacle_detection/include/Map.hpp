@@ -11,8 +11,8 @@
 
 #include <memory.h>
 
-#if _DEBUG
-    #define ASSERT(x) if(!(x)) DebugBreak()
+#if 1
+    #define ASSERT(x) if(!(x)) {std::cout<<"Error Assertion ##x\n";*(int*(0))=0;}
 #else
     #define ASSERT(x) 
 #endif
@@ -86,7 +86,7 @@ public:
     {
         return -dy+ny;
     }
-#if _DEBUG
+#if 1
     T & operator() (int ax,int ay)
     {
         int kx=ax+dx;int ky=ay+dy;
@@ -102,7 +102,7 @@ public:
         return g[ax+nx*ay];
     }
 #endif
-#if _DEBUG
+#if 1
     const T & operator() (int ax,int ay) const
     {
         int kx=ax+dx;int ky=ay+dy;
