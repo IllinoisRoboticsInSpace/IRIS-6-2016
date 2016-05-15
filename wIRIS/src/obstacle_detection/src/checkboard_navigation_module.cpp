@@ -85,7 +85,7 @@ bool nextImage(VideoCapture & inputCapture, Mat & result, long * millis_timestam
         }
         if (millis() - j > 10)
         {
-            cout<<"took new image in "<<millis()-j<<" millis\n";
+            //cout<<"took new image in "<<millis()-j<<" millis\n";
             break;
         }
     }
@@ -94,7 +94,7 @@ bool nextImage(VideoCapture & inputCapture, Mat & result, long * millis_timestam
         cout << "WEBCAM IMAGE GRAB IS GOING NUTS - ERROR, eventually trying to restart\n";
         return false;
     }
-    cout<<"have new image \n";
+    //cout<<"have new image \n";
     if (!inputCapture.retrieve(result))
     {
         cout << "WEBCAM IMAGE RETRIEVE FAILED eventually trying to restart\n";
