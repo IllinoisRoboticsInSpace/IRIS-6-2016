@@ -270,7 +270,7 @@ void* thread_depth(void* arg)
                 {
                     for( int y_i = -gradientHalfSizeY ; y_i < gradientHalfSizeY ; y_i++)
                     {
-                        if(gradient(x_i,y_i) != -9999.0 &&
+                        if(gradient(x_i,y_i) != map_defaultValue &&
                                         x_i+xPos>=-historicHalfSizeX && y_i+yPos>=0 &&
                                         x_i+xPos < historicHalfSizeX && y_i+yPos < historicSizeY)
                             historic(x_i+xPos,y_i+yPos) = gradient(x_i,y_i);
@@ -284,7 +284,7 @@ void* thread_depth(void* arg)
                 {
                     int x = i/3;
                     int px =x%(historicHalfSizeX*2)-historicHalfSizeX;
-                    int py =-x/(historicSizeY*2);
+                    int py =-x/(historicSizeY*2)+historicSizeY;
                     float val = historic( px,py );
                     if(px==0 || py==0) //Mark axis
                     {
@@ -298,7 +298,7 @@ void* thread_depth(void* arg)
                         pMapHTTP[i+1] = 0;
                         pMapHTTP[i+2] = 255;
                     }
-                    else if(val == -9999.0)
+                    else if(val == map_defaultValue)
                     {
                         pMapHTTP[i+0] = 0;//red
                         pMapHTTP[i+1] = 0;//green
