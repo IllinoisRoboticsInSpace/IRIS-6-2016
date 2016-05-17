@@ -14,6 +14,12 @@ class navigation_and_mapping_data {
     volatile double track_left;
 };
 
+struct chesspos{
+    float x,y;
+    float t;
+    long int millis;
+};
+
 chesspos get_chessboard_navigation_pos();
 
 extern navigation_and_mapping_data D={0,0};

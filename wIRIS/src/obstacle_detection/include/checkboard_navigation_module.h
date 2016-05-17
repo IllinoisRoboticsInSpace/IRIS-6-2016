@@ -2,14 +2,6 @@
 
 #include <string>
 
-struct chesspos{
-    float x,y;
-    float t;
-    long int millis;
-};
-
-chesspos get_chessboard_navigation_pos();
-
 void* init_chessboard_navigation( void * stop_flag_ptr );
 
 long int millis();
