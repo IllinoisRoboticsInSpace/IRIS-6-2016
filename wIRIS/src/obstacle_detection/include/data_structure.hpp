@@ -22,4 +22,4 @@ struct chesspos{
 
 chesspos get_chessboard_navigation_pos();
 
-extern navigation_and_mapping_data D={0,0};
+extern navigation_and_mapping_data D;

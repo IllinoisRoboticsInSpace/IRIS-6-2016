@@ -45,6 +45,14 @@ void got_target_pos(geometry_msgs::Pose2D target_pos)
 
 int main(int argc, char **argv)
 {
+    D.map=0;
+    D.local_map=0;
+    D.true_pos_x=0;
+    D.true_pos_y=0;
+    D.true_theta=0;
+    D.imu_theta=0;
+    D.track_right=0;
+    D.track_left=0;
 
     //control C handling
     struct sigaction sigIntHandler;
