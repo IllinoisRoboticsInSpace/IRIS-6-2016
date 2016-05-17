@@ -22,7 +22,7 @@ using namespace std;
 #include "CoordSystemKinect.hpp"//Kinect Input
 #include "libfreenect.hpp"//Kinect Input
 #include "Linear.hpp"//Mat3
-#include "Map.hpp"//Map<T>
+#include "data_structure.hpp"
 /**OPENGL**/
 /*#include <GL/glut.h>
 #include <GL/gl.h>
@@ -37,10 +37,6 @@ using namespace std;
 
 void* thread_display(void* arg);
 
-const int windowX = 1440;
-const int windowY = 480;
-const int dispHeight = 480;
-const int dispWidth = 480;
 
 /**KINECT**/
 const int maxViewDist = 2500;//millimeters
@@ -73,17 +69,69 @@ template<typename T> T pow2(T x){return x*x;}
 double distS(double a){return min(fmod2pi(a),M_PI-fmod2pi(a));}
 
 /**DATA**/
-static uint16_t* pDepth = NULL;
-static char* pVideo = NULL;
-static char* pDepthFeed = NULL;
-static uint16_t* pDepthDisplay = NULL;
-static unsigned char* pMapHTTP = NULL;
+uint16_t* pDepth = NULL;
+//char* pVideo = NULL;
+//char* pDepthFeed = NULL;
+//uint16_t* pDepthDisplay = NULL;
+unsigned char* pMapHTTP = NULL;
 
-static Vec3f downDirection(0,0,0);//static to prevent other files from seeing this
+Vec3f downDirection(0,0,0);//static to prevent other files from seeing this
 
 /**LFN**/
-static freenect_context* f_ctx=0;
+freenect_context* f_ctx=0;
 freenect_device* f_dev;
+
+
+/**======================**/
+/**TELLS US THE STEEPNESS FACTOR OF A PIECE OF TERRAIN BY COMPARING THE HEIGHT OF ADJACENT PIECES**/
+/**======================**/
+template <typename T>
+int f_isSteep(T origin, T up, T left, T down, T right, T tolerance)//written by Max Archer 9/17/2014
+{
+    if(origin!=map_defaultValue)
+    {
+        if(up==map_defaultValue)
+            up = origin;
+        if(left==map_defaultValue)
+            left = origin;
+        if(down==map_defaultValue)
+            down = origin;
+        if(right==map_defaultValue)
+            right = origin;
+
+        if(up-origin >= tolerance || origin-up >= tolerance)
+            return map_occupied;
+        else if(left-origin >= tolerance || origin-left >= tolerance)
+            return map_occupied;
+        else if(down-origin >= tolerance || origin-down >= tolerance)
+            return map_occupied;
+        else if(right-origin >= tolerance || origin-right >= tolerance)
+            return map_occupied;
+    }
+    return map_unoccupied;
+}
+
+/**======================**/
+/**Uses the input map to produce a gradient of this map**/
+/**======================**/
+void makeGradient(MATRIX & output, const MATRIX& input, const float tolerance)//takes a map and gives it the gradient data
+{
+    
+    //const float tolerance = 0.5f;
+    for(int y = input.yllim()+1; y < input.yhlim()-1; ++y)
+    {
+        for(int x = input.xllim()+1; x < input.xhlim()-1; ++x)
+        {
+            if(input(x,y) != map_defaultValue)//get the point, and all points around it!
+                output(x,y) = f_isSteep(input(x  , y  ),
+                                        input(x  , y+1),
+                                        input(x  , y-1),
+                                        input(x-1, y  ),
+                                        input(x+1, y  ),
+                                        tolerance);
+        }
+    }
+}
 
 /**================================================================================**/
 /**DEPTH SENSOR CALLBACK**/
@@ -97,24 +145,24 @@ void depth_cb(freenect_device* pDevice, void* v_depth, uint32_t timestamp)
         memcpy(pDepth, v_depth, sizeDepth);
         depth_used = false;
     }
-    if(depth_displayed)
-    {
-        memcpy(pDepthDisplay, v_depth, sizeDepth);
-        depth_displayed = false;
-    }
+    //if(depth_displayed)
+    //{
+        //memcpy(pDepthDisplay, v_depth, sizeDepth);
+        //depth_displayed = false;
+    //}
 }
 /**================================================================================**/
 /**RGB SENSOR CALLBACK**/
 /**================================================================================**/
-void video_cb(freenect_device* pDevice, void* v_video, uint32_t timestamp)
-{
-    //cout<<"data at video!\n size_video = "<<sizeVideo<<"\n";
-    if(video_used)
-    {
-        memcpy(pVideo, v_video, sizeVideo);
-        video_used = false;
-    }
-}
+//void video_cb(freenect_device* pDevice, void* v_video, uint32_t timestamp)
+//{
+    ////cout<<"data at video!\n size_video = "<<sizeVideo<<"\n";
+    //if(video_used)
+    //{
+        //memcpy(pVideo, v_video, sizeVideo);
+        //video_used = false;
+    //}
+//}
 
 float stof0(const string &a) {
         stringstream ss(a);
@@ -196,6 +244,11 @@ bool  SerialConnect(serial::Serial & ser)
 void* thread_depth(void* arg)
 {
     MATRIX historic(-historicHalfSizeX,historicHalfSizeX, 0, historicSizeY);
+    MATRIX gradient(-gradientHalfSizeX,gradientHalfSizeX, -gradientHalfSizeY,gradientHalfSizeY);
+    MATRIX height(-gradientHalfSizeX,gradientHalfSizeX, -gradientHalfSizeY,gradientHalfSizeY);
+    D.map=&historic;
+    D.local_map=&gradient;
+    
     historic.fill(map_defaultValue);
 
     while(not threads_stop)
@@ -206,8 +259,6 @@ void* thread_depth(void* arg)
                 ROS_INFO("\nNo Data From Kinect Accelerometer!");
 
             const int pointCount = csk::dimX*csk::dimY;
-            MATRIX gradient(-gradientHalfSizeX,gradientHalfSizeX, -gradientHalfSizeY,gradientHalfSizeY);
-            MATRIX height(-gradientHalfSizeX,gradientHalfSizeX, -gradientHalfSizeY,gradientHalfSizeY);
             gradient.fill(map_defaultValue);
             height.fill(map_defaultValue);
 
@@ -379,10 +430,10 @@ void* init_kinect_mapping(void * stop_flag)
         /**===================================================**/
         /**ALL ABOUT INITIALIZING THE CONNECTION WITH KINECT!!**/
         /**===================================================**/
-        pDepthDisplay = static_cast<uint16_t*>(malloc(sizeDepth));
-        pDepthFeed = static_cast<char*>(malloc(sizeVideo));//used to rgb display what the kinect sees
+        //pDepthDisplay = static_cast<uint16_t*>(malloc(sizeDepth));
+        //pDepthFeed = static_cast<char*>(malloc(sizeVideo));//used to rgb display what the kinect sees
         pDepth = static_cast<uint16_t*>(malloc(sizeDepth));//each point is a uint16_t for depth
-        pVideo = static_cast<char*>(malloc(sizeVideo));//each point needs 3 chars to represent the color there (r255,g255,b255)
+        //pVideo = static_cast<char*>(malloc(sizeVideo));//each point needs 3 chars to represent the color there (r255,g255,b255)
 
         sizeHTTPimage = historicHalfSizeX * historicSizeY * 2 * 3;
         pMapHTTP = static_cast<unsigned char*>(malloc(sizeHTTPimage)); //http map buffer
@@ -470,10 +521,11 @@ void* init_kinect_mapping(void * stop_flag)
         threads_stop = true;
         pthread_join(depth_t, 0);
 
-    free(pDepthDisplay);
-    free(pDepthFeed);
+    //free(pDepthDisplay);
+    //free(pDepthFeed);
     free(pDepth);
-    free(pVideo);
+    //free(pVideo);
+    free(pMapHTTP);
 
     return 0;
 }

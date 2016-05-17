@@ -1,10 +1,12 @@
-#include<stdio.h>
-#include<string.h>    //strlen
-#include<string>    
-#include<sys/socket.h>
-#include<arpa/inet.h> //inet_addr
-#include<unistd.h>    //write
-#include<pthread.h> //for threading , link with lpthread
+#include <stdio.h>
+#include <string.h>    //strlen
+#include <string>    
+#include <sys/socket.h>
+#include <arpa/inet.h> //inet_addr
+#include <unistd.h>    //write
+#include <pthread.h> //for threading , link with lpthread
+#include "data_structure.hpp"
+
 
 struct data_connection
 {
@@ -231,7 +233,7 @@ void *connection_handler(void * pointer)
     //Free the socket pointer
     delete (data_connection*)pointer;
          
-    puts("debug_ip_server: Connection accepted\n");
+    //puts("debug_ip_server: Connection accepted\n");
                      
     const char *message;
     char buffer[100];
