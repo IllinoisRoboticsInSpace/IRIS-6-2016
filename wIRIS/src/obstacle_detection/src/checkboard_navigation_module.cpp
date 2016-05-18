@@ -196,10 +196,10 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
             {
                 count_lost = 0;
                 // improve the found corners' coordinate accuracy for chessboard
-                Mat viewGray;
-                cvtColor(view, viewGray, COLOR_BGR2GRAY);
-                cornerSubPix(viewGray, pointBuf, Size(11, 11),
-                    Size(-1, -1), TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+                //Mat viewGray;
+                //cvtColor(view, viewGray, COLOR_BGR2GRAY);
+                //cornerSubPix(viewGray, pointBuf, Size(11, 11),
+                //    Size(-1, -1), TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
                 
 
                 // Draw the corners.
@@ -209,43 +209,37 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
 
                 //if (boardSize.width == 4 && boardSize.height == 3)
                 {
-                    const int Alist[16][2] = {
-                        { 0, 4},{ 0, 5},
-                        { 1, 5},{ 1, 4},
-                        { 2, 6},{ 2, 7},
-                        { 3, 7},{ 3, 6},
-                        { 4, 8},{ 4, 9},
-                        { 5, 9},{ 5, 8},
-                        { 6,10},{ 6,11},
-                        { 7,11},{ 7,10},
-                    };
-                    const int Blist[12][2] = {
-                        { 0, 2},{ 0, 3},
-                        { 1, 3},{ 1, 2},
-                        { 4, 6},{ 4, 7},
-                        { 5, 7},{ 5, 6},
-                        { 8,10},{ 8,11},
-                        { 9,11},{ 9,10},
-                    };
+                    const int Alist[15][2]={
+                        { 0, 1},{ 1, 2},{ 2, 3},
+                        { 4, 5},{ 5, 6},{ 6, 7},
+                        { 8, 9},{ 9,10},{10,11},
+                        { 4, 9},{ 5,10},{ 6,11},
+                        { 8, 5},{ 9, 6},{10, 7}
+                        };
+                    const int Blist[8][2]={
+                        { 0, 4},{ 1, 5},{ 2, 6},{ 3, 7},
+                        { 0, 8},{ 1, 9},{ 2,10},{ 3,11}
+                        };
                     float a = 0;
                     float b = 0;
                     float c = 0;
                     float& w = squareSize;
                     float& d = depth;
-                    for (int ii = 0;ii < 16;ii++)
+                    for (int ii = 0;ii < 15;ii++)
                         a += pointBuf[Alist[ii][0]].x - pointBuf[Alist[ii][1]].x;
-                    for (int ii = 0;ii < 12;ii++)
+                    for (int ii = 0;ii < 8;ii++)
                         b += pointBuf[Blist[ii][0]].x - pointBuf[Blist[ii][1]].x;
                     for (int ii = 0;ii < 12;ii++)
-                        c += pointBuf[Blist[ii][0]].x;
-                    a /= 16;
-                    b /= 12;
+                        c += pointBuf[ii].x;
+                    a /= 15;
+                    b /= 8;
                     c /= 12;
                     if (a < 0)
                     {
                         a = -a;
                         b = -b;
                     }
+                    b=-b;
                     //find circles center and radious
                     //for(vector<Point2f>::iterator it=pointBuf.begin();it!=pointBuf.end();it++)
                     //{
@@ -284,7 +278,10 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
 
                     double vehicle_angle = fmod2pi(webcam_angle*M_PI / 180. - atan2(y, x) - M_PI);
 
-                    cout << "webcam nav x " << x << " y " << y << " th " << webcam_angle << " delta " << delta << " vehicle " << vehicle_angle*180. / M_PI << endl;
+                    cout << "webcam nav " << "x(cm) " << x << " y(cm) " << y << " "
+		         << "x(in) " << x/2.54 << " y(in) " << y/2.54 << endl
+			 << "webcam angle th " << webcam_angle
+			 << " delta " << delta << " vehicle " << vehicle_angle*180. / M_PI << endl;
 
                     while (lock);
                     lock = 1;
