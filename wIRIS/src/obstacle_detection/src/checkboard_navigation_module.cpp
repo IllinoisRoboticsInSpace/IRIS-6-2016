@@ -246,7 +246,7 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
                     //    cout << "Point " << it->x << " , " << it->y << endl;
                     //}
                     //cout << "a " << a/50 << " b " << b/50 << endl;
-                    a *= 2.226618 / view.cols;
+                    a *= 2.226618/(80./77.5)/ view.cols;
                     b *= 2.226618 / view.cols;
                     c -= view.cols / 2;
                     c *= 2.226618 / view.cols;
