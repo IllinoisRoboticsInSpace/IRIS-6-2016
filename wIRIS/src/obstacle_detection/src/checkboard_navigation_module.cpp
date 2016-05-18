@@ -113,6 +113,11 @@ bool nextImage(VideoCapture & inputCapture, Mat & result, long * millis_timestam
 
 void* init_chessboard_navigation(void * stop_flag_ptr )
 {
+    static const int avg_num = 3;
+    static float x_hist[avg_num];
+    static float y_hist[avg_num];
+    static int count=0;
+    static int i_hist=0;
     volatile bool * stop_flag = (bool*) stop_flag_ptr;
     ros::NodeHandle n("chessboard_navigation");
     ros::Publisher pub = n.advertise<std_msgs::Float32>("/IRIS/webcam_angle", 1);
@@ -255,6 +260,20 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
                     float dperp = (w*dy - (dy * 2 - d)*dx) / (dx*dx + dy*dy);
                     float x = w + dy*dperp;
                     float y = d - dx*dperp;
+                    x_hist[i_hist]=x;
+                    y_hist[i_hist]=y;
+                    i_hist=(i_hist+1)%avg_num;
+                    count ++;
+                    float avgx=0,avgy=0;
+                    for(i=0;i<min(count,avg_num);i++)
+                    {
+                        avgx+=x_hist[i];
+                        avgy+=y_hist[i];
+                    }
+                    avgx/=min(count,avg_num);
+                    avgy/=min(count,avg_num);
+                    x=avgx;
+                    y=avgy;
                     //cout << "dx " << dx << " dy " << dy << endl;
 
                     //rotate webcam!
