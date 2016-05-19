@@ -137,6 +137,7 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
 
     int camera_id = 0;
     VideoCapture inputCapture;
+    namedWindow("Image View");
 
     for (int re_connect_retries = 0;!(*stop_flag);++re_connect_retries)
     {
@@ -179,7 +180,8 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
             if (!nextImage(inputCapture, view,&millis_timestamp))
                 break;
             if (i == 0) cout << "webcam image size is " << view.cols << "x" << view.rows << "\n";
-
+            imshow("Image View", view);
+    
             //cout << "Webcam navigation data!" << endl;
 
             imageSize = view.size();  // Format input image.

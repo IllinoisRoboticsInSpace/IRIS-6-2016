@@ -246,7 +246,7 @@ int cvFindChessboardCorners( const void* arr, CvSize pattern_size,
     {
     int k = 0;
     const int min_dilations = 0;
-    const int max_dilations = 0;//7;
+    const int max_dilations = 2;//7;
     const int max_k = 1;//6;
     cv::Ptr<CvMat> norm_img, thresh_img;
 #ifdef DEBUG_CHESSBOARD
