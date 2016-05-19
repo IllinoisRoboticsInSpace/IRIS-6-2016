@@ -73,8 +73,11 @@ void path_planning(void* unused)
 		
 		//normalize and get right and left values
 		double normalizer=absd(turning_cntl)+absd(forward_cntl);
-		turning_cntl/=normalizer;
-		forward_cntl/=normalizer;
+		if(normalizer>0.)
+		{
+			turning_cntl/=normalizer;
+			forward_cntl/=normalizer;
+		}
 		double right=forward_cntl+turning_cntl;
 		double left=forward_cntl-turning_cntl;
 
