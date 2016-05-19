@@ -8,8 +8,8 @@ project(obstacle_detection)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  pcl_conversions
-  pcl_ros
+  #pcl_conversions
+  #pcl_ros
   roscpp
   sensor_msgs
 )
@@ -109,9 +109,13 @@ find_package( OpenCV REQUIRED )
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES obstacle_detection
-  CATKIN_DEPENDS pcl_conversions pcl_ros roscpp sensor_msgs
-  DEPENDS freenect serial GL GLU glut usb-1.0
+  CATKIN_DEPENDS roscpp sensor_msgs
+  DEPENDS serial GL GLU glut usb-1.0
 )
+
+#  CATKIN_DEPENDS pcl_conversions pcl_ros roscpp sensor_msgs
+#  DEPENDS freenect serial GL GLU glut usb-1.0
+
 
 ###########
 ## Build ##
@@ -136,7 +140,8 @@ include_directories(
 # add_dependencies(obstacle_detection ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(computer_display src/main.cpp src/kinect_obstacle_module.cpp src/CoordSystemKinect.cpp src/checkboard_navigation_module.cpp src/path_planning_module.cpp include/CoordSystemKinect.hpp include/Linear.hpp include/Map.hpp include/debug_ip_server.h include/checkboard_navigation_module.h include/claibinit_mod.h src/debug_ip_server.cpp include/data_structure.hpp)
+add_executable(computer_display src/main.cpp src/checkboard_navigation_module.cpp src/path_planning_module.cpp include/Map.hpp include/debug_ip_server.h include/checkboard_navigation_module.h include/claibinit_mod.h src/debug_ip_server.cpp include/data_structure.hpp)
+#src/kinect_obstacle_module.cpp src/CoordSystemKinect.cpp include/CoordSystemKinect.hpp include/Linear.hpp 
 rosbuild_add_compile_flags(computer_display `pkg-config libusb-1.0 --libs --cflags`)
 #rosbuild_add_compile_flags(computer_display -lusb -lfreenect -lserial -lGL -lGLU -lglut)
 rosbuild_add_link_flags(computer_display -lusb -lfreenect -L/opt/ros/hydro/lib -lserial -lGL -lGLU -lglut)
