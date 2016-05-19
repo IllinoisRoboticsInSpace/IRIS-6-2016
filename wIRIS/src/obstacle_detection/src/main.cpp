@@ -9,6 +9,7 @@
 #include <ros/ros.h>
 
 #include "checkboard_navigation_module.h"
+#include "path_planning_module.h"
 #include "data_structure.hpp"
 #include <geometry_msgs/Pose2D.h>
 
@@ -66,12 +67,14 @@ int main(int argc, char **argv)
 
     pthread_t chessboard_t;
     pthread_t navigation_t;
+    pthread_t path_planning_t;
 
     
 
     int chessboard = pthread_create(&chessboard_t, NULL, init_chessboard_navigation, (void*)&stop_flag);
     int navigation = pthread_create(&navigation_t, NULL, init_kinect_mapping, (void*)&stop_flag);
-    if(navigation || chessboard )
+    int path = pthread_create(&path_planning_t, NULL, path_planning, 0);
+    if(navigation || chessboard || path_planning)
         exit(EXIT_FAILURE);
 
     ros::NodeHandle n("main_estimator");
@@ -98,6 +101,7 @@ int main(int argc, char **argv)
 
     pthread_join(chessboard_t, 0);
     pthread_join(navigation_t, 0);
+    pthread_join(path_planning_t, 0);
 
 
 }

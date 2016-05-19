@@ -22,7 +22,7 @@ double goal_y;
 double forward_cntl;
 double turning_cntl;
 
-void init_path_planning(void* a)
+void path_planning(void* a)
 {
 	while(1)
 	{
@@ -34,4 +34,11 @@ void init_path_planning(void* a)
 		forward_cntl = sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y))/LINEAR_CONST;
 		turning_cntl = (atan2(goal_y - pos.y, goal_x - pos.x) - pos.t)/ANGULAR_CONST;
 	}
+}
+
+void FSM_callback()
+{
+	//States
+	enum state {wait_to_start, localize, move_to_mine, mine, move_to_deposit, deposit, error};
+
 }
