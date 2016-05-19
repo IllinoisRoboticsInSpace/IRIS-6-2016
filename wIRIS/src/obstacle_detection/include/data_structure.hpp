@@ -3,7 +3,7 @@
 
 
 
-class navigation_and_mapping_data {
+struct navigation_and_mapping_data {
     volatile MATRIX* map;
     volatile MATRIX* local_map;
     volatile double true_pos_x;
