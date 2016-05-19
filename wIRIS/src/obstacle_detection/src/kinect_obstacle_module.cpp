@@ -409,7 +409,7 @@ void* thread_kinect(void* arg)
         freenect_get_mks_accel(pState, &dx, &dy, &dz);
         downDirection = csk::FindDown(pState->accelerometer_x, pState->accelerometer_y, pState->accelerometer_z);
         //cout << "\nDown:\t" << downDirection.x << "\t" << downDirection.y << "\t" << downDirection.z;
-        //sleep(0.010);
+        //usleep(10000);
     }
 
     /**SHUT DOWN STREAMS**/

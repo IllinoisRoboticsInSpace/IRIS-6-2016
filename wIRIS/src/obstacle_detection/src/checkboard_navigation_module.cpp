@@ -46,7 +46,7 @@ chesspos get_chessboard_navigation_pos()
     //{
         //cout<<"Process is locked trying to access chessboard navigation data"<<endl;
         //while(lock)
-            //sleep(0.001);
+            //usleep(1000);
     //}
     //lock=1;
     chesspos ret;
@@ -154,7 +154,7 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
                 sleep(3);
                 camera_id = 0;
             }
-            sleep(0.200);
+            usleep(200000);
             cout << "WEBCAM ERROR retrying: ";
             continue; // try next device
         }
@@ -187,7 +187,7 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
             {
                 cout << "Empty webcam image received :(  *************************" << endl;
                 static int count_fail = 10;
-                sleep(0.010);
+                usleep(10000);
                 if (count_fail-- <= 0)
                 {
                     count_fail = 10;
