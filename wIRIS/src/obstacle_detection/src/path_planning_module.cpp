@@ -38,157 +38,163 @@ template<typename T> T pow2(T d){return d*d;}
 //find distance in S(2pi) set (like a circle: through either side)
 template<typename T> T diff2pi(T d)
 {
-	d=fmod2pi(d);
-	return min(d,2*M_PI-d);
+    d=fmod2pi(d);
+    return min(d,2*M_PI-d);
 }
 
 void* path_planning(void* unused)
 {
-	//Initialize ROS node and publisher
-	ros::NodeHandle n;
-	ros::Publisher pub_control=n.advertise<std_msgs::String>("/IRIS/autonomous_command" "hh", 1);
-	while(1)
-	{
-		double forward_cntl;
-		double turning_cntl;
-		//Get robot position
-		chesspos pos = get_chessboard_navigation_pos();
+    //Initialize ROS node and publisher
+    ros::NodeHandle n;
+    ros::Publisher pub_control=n.advertise<std_msgs::String>("/IRIS/autonomous_command" "hh", 1);
+    while(1)
+    {
+        double forward_cntl;
+        double turning_cntl;
+        //Get robot position
+        chesspos pos = get_chessboard_navigation_pos();
 
-		//Message setup
-		if(control_direction==BACKWARDS)
-		{
-			forward_cntl=-1000;
-			turning_cntl = 0.;
-		}
-		else
-		{
-			forward_cntl = control_direction*sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y))*LINEAR_CONST;
-			if(control_direction>0)
-				turning_cntl = diff2pi(fmod2pi(atan2(goal_y - pos.y, goal_x - pos.x)) - fmod2pi(pos.t))*ANGULAR_CONST;
-			else if(control_direction<0)
-				turning_cntl = diff2pi(fmod2pi(atan2(goal_y - pos.y, goal_x - pos.x)) - fmod2pi(pos.t+M_PI))*ANGULAR_CONST;
-			else
-				turning_cntl = 0.;
-		}
-		
-		//normalize and get right and left values
-		double normalizer=absd(turning_cntl)+absd(forward_cntl);
-		if(normalizer>0.)
-		{
-			turning_cntl/=normalizer;
-			forward_cntl/=normalizer;
-		}
-		double right=forward_cntl+turning_cntl;
-		double left=forward_cntl-turning_cntl;
+        //Message setup
+        if(control_direction==BACKWARDS)
+        {
+            forward_cntl=-1000;
+            turning_cntl = 0.;
+        }
+        else
+        {
+            forward_cntl = control_direction*sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y))*LINEAR_CONST;
+            if(control_direction>0)
+                turning_cntl = diff2pi(fmod2pi(atan2(goal_y - pos.y, goal_x - pos.x)) - fmod2pi(pos.t))*ANGULAR_CONST;
+            else if(control_direction<0)
+                turning_cntl = diff2pi(fmod2pi(atan2(goal_y - pos.y, goal_x - pos.x)) - fmod2pi(pos.t+M_PI))*ANGULAR_CONST;
+            else
+                turning_cntl = 0.;
+        }
+        
+        //normalize and get right and left values
+        double normalizer=absd(turning_cntl)+absd(forward_cntl);
+        if(normalizer>0.)
+        {
+            turning_cntl/=normalizer;
+            forward_cntl/=normalizer;
+        }
+        double right=forward_cntl+turning_cntl;
+        double left=forward_cntl-turning_cntl;
 
-		//publish messages
-		std_msgs::String msg;
-		std::stringstream ss;
-		ss << left << "," << right << "," << bin_movement << "," << paddle_movement << "," << paddle_onoff ;
-		msg.data = ss.str();
-		pub_control.publish(msg);
-		
-		sleep(0.050);
-
-	}
+        //publish messages
+        std_msgs::String msg;
+        std::stringstream ss;
+        ss << left << "," << right << "," << bin_movement << "," << paddle_movement << "," << paddle_onoff ;
+        msg.data = ss.str();
+        pub_control.publish(msg);
+        
+        sleep(0.050);
+        static int count_loops=0;
+        if(!(count_loops++%20))std::cout<<"\033[0;32m"<< "PATHPLAN: current "<<pos.x<<" "<<pos.y<<" "<<pos.t<<" target "<< goal_x << " " << goal_y << " action f "<< forward_cntl << " t " << turning_cntl <<"\033[0m";
+    }
 }
 
 //Sets a goal to move to
-void set_goal(double x, double y, int dir)
+void set_goal(double x, double y, int dir, static char * comment="")
 {
-	//Set the goal position to the x and y values
-	goal_x = x;
-	goal_y = y;
-	control_direction = dir;
+    std::cout<<"\033[0;35m"<< "PATHPLAN: set_goal "<<x<<" "<<y<<" "<<dir<<" "<< comment <<"\033[0m";
+    //Set the goal position to the x and y values
+    goal_x = x;
+    goal_y = y;
+    control_direction = dir;
 }
 
 //Waits until robot reaches destination within specified tolerance
-void wait_for_dist(double epsilon)
+void wait_for_dist(double epsilon, static char * comment="")
 {
-	//Wait in here until the robot position is at or within the allowed tolerance
-	chesspos pos = get_chessboard_navigation_pos();
-	double dist = sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y));
+    std::cout<<"\033[0;35m"<< "PATHPLAN: wait_for_dist "<< epsilon << " " << comment <<"\033[0m";
+    //Wait in here until the robot position is at or within the allowed tolerance
+    chesspos pos = get_chessboard_navigation_pos();
+    double dist = sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y));
 
-	while(dist > epsilon)
-	{
-		//Recompute distance from goal
-		pos = get_chessboard_navigation_pos();
-		dist = sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y));
+    while(dist > epsilon)
+    {
+        //Recompute distance from goal
+        pos = get_chessboard_navigation_pos();
+        dist = sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y));
 
-		//Wait for 10 ms
-		sleep(0.01);
-	}
+        //Wait for 10 ms
+        sleep(0.01);
+    }
 
-	control_direction = 0;
+    control_direction = 0;
 }
 
 //Main Finite State Machine
 void* FSM(void * unused)
 {
-	//Sequentially move through the different states: move_to_mine -> mine -> move_to_deposit -> deposit
-	//Offset for varying the x-axis position of the goal states and iteration level
-	int offset[3] = {0, 100, -100};
-	int iter = 0;
+    //Sequentially move through the different states: move_to_mine -> mine -> move_to_deposit -> deposit
+    //Offset for varying the x-axis position of the goal states and iteration level
+    int offset[3] = {0, 100, -100};
+    int iter = 0;
 
-	double x;
-	double y;
-	double epsilon = 100;
+    double x;
+    double y;
+    double epsilon = 100;
 
-	while(1)
-	{
-		//Move to mine
-		x = offset[iter];
-		y = 500;
-		//epsilon = 0.2*y;
-		set_goal(x, y, 1);
-		wait_for_dist(epsilon);
+    while(1)
+    {
+        //Move to mine
+        x = offset[iter];
+        y = 500;
+        //epsilon = 0.2*y;
+        set_goal(x, y, 1, "Move to mine");
+        wait_for_dist(epsilon,  "Move to mine");
 
-		//Mine
-		//Order: start Maxon -> lower paddle -> set_goal() -> wait_for_dist() -> raise paddle -> stop Maxon
-		x = offset[iter];
-		y += 50;
-		//epsilon = 0.2*y;
-		
-		paddle_onoff = MOVE;
-		paddle_movement = RETRACT;
-		set_goal(x, y, 1);
-		sleep(10); //???
-		paddle_movement = STAY;
-		wait_for_dist(epsilon);
-		paddle_movement = EXTEND;
-		sleep(10); //???
-		paddle_onoff = STOP;
-		paddle_movement = STAY;
+        //Mine
+        //Order: start Maxon -> lower paddle -> set_goal() -> wait_for_dist() -> raise paddle -> stop Maxon
+        x = offset[iter];
+        y += 50;
+        //epsilon = 0.2*y;
+        
+        paddle_onoff = MOVE;
+        paddle_movement = RETRACT;
+        set_goal(x, y, 1, "Mine");
+        sleep(10); //???
+        paddle_movement = STAY;
+        wait_for_dist(epsilon, "Mine");
+        paddle_movement = EXTEND;
+        sleep(10); //???
+        paddle_onoff = STOP;
+        paddle_movement = STAY;
 
-		//Move to deposit
-		//Align to center of arena
-		x = 0;
-		y = 297;
-		//epsilon = 0.2*y;
-		set_goal(x, y, -1);
-		wait_for_dist(epsilon);
+        //Move to deposit
+        //Align to center of arena
+        x = 0;
+        y = 297;
+        //epsilon = 0.2*y;
+        set_goal(x, y, -1,"Move to deposit");
+        wait_for_dist(epsilon,"Move to deposit");
 
-		//Move up to bin
-		x = 0;
-		y = -50;
-		//epsilon = 100;
-		set_goal(x, y, -1);
-		wait_for_dist(epsilon);
+        //Move up to bin
+        x = 0;
+        y = -50;
+        //epsilon = 100;
+        set_goal(x, y, -1,"Move up to bin");
+        wait_for_dist(epsilon, "Move up to bin");
 
-		//Now just move straight back until we reack the collection bin
-		control_direction = BACKWARDS;
-		sleep(10); //???
+        //Now just move straight back until we reack the collection bin
+        std::cout<<"\033[0;35m"<< "PATHPLAN: approaching into bin" <<"\033[0m";
+        control_direction = BACKWARDS;
+        sleep(10); //???
+        
+        //Deposit
+        std::cout<<"\033[0;35m"<< "PATHPLAN: deposit " <<"\033[0m";
+        bin_movement = EXTEND;
+        sleep(15); //~15s
+        bin_movement = STAY;
+        sleep(5); //???
+        bin_movement = RETRACT;
+        sleep(10); //~10-15s
+        bin_movement = STAY;
 
-		//Deposit
-		bin_movement = EXTEND;
-		sleep(15); //~15s
-		bin_movement = STAY;
-		sleep(5); //???
-		bin_movement = RETRACT;
-		sleep(10); //~10-15s
-		bin_movement = STAY;
-
-		//Increment the iteration
-		iter = (iter + 1) % 3;
-	}
+        //Increment the iteration
+        iter = (iter + 1) % 3;
+        std::cout<<"\033[0;35m"<< "PATHPLAN: New iteration "<<iter  <<" of type "<< offset[iter] <<"\033[0m";
+    }
 }
