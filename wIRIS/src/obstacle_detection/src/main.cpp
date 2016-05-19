@@ -24,6 +24,9 @@ void my_handler(int s) {
 
 volatile bool stop_flag = false;
 
+//Create instance of data
+navigation_and_mapping_data D;
+
 //void got_theta_IMU(std_msgs::Float32 theta)
 //{
     //D.imu_theta=theta.data;
