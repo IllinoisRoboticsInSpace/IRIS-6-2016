@@ -62,7 +62,6 @@ void* path_planning(void* unused)
         
         if(millis()-pos.millis<1000)
         {
-
             //Message setup
             if(control_direction==BACKWARDS)
             {
@@ -74,8 +73,7 @@ void* path_planning(void* unused)
                 forward_cntl = control_direction*sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y))*LINEAR_CONST;
                 if(control_direction>0)
                     turning_cntl = diff2pi(fmod2pi(atan2(goal_y - pos.y, goal_x - pos.x)) - fmod2pi(pos.t))*ANGULAR_CONST;
-                else if(control_direction<0)long int millis()
-
+                else if(control_direction<0)
                     turning_cntl = diff2pi(fmod2pi(atan2(goal_y - pos.y, goal_x - pos.x)) - fmod2pi(pos.t+M_PI))*ANGULAR_CONST;
                 else
                     turning_cntl = 0.;
