@@ -42,7 +42,7 @@ template<typename T> T diff2pi(T d)
 	return min(d,2*M_PI-d);}
 }
 
-void path_planning(void* a)
+void path_planning(void* unused)
 {
 	//Initialize ROS node and publisher
 	ros::NodeHandle n;
@@ -84,6 +84,8 @@ void path_planning(void* a)
 		ss << left << "," << right << "," << bin_movement << "," << paddle_movement << "," << paddle_onoff ;
 		msg.data = ss.str();
 		pub_control.publish(msg);
+		
+		sleep(0.050);
 
 	}
 }
@@ -118,7 +120,7 @@ void wait_for_dist(double epsilon)
 }
 
 //Main Finite State Machine
-void FSM()
+void FSM(void * unused)
 {
 	//Sequentially move through the different states: move_to_mine -> mine -> move_to_deposit -> deposit
 	//Offset for varying the x-axis position of the goal states and iteration level
