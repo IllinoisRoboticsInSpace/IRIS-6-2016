@@ -25,8 +25,8 @@ void setup()
     pinMode(MAXON_BRAKE, OUTPUT); //unset brake
     collect_rotating.init(
         MAXON_SPEED, MAXON_DIR, MAXON_ENABLE, //pins
-        255, // extend_speed (forward)
-        0, // retract_speedint (backwards)
+        0, // extend_speed (forward)
+        192, // retract_speedint (backwards)
         1 //brake_negate (enable negate)
         );
     pinMode(MAXON_HALL, INPUT);
@@ -34,8 +34,8 @@ void setup()
     //Dispensation LA pinout
     bin_linear.init(
         DISP_SPEED, DISP_DIR, DISP_BRAKE, //pins
-        255, // extend_speed (forward)
-        255, // retract_speedint (backwards)
+        194, // extend_speed (forward)
+        194, // retract_speedint (backwards)
         0 //brake_negate (enable negate)
         );
     pinMode(DISP_THERMAL, INPUT);
@@ -190,7 +190,7 @@ void loop()
         //Handle collection rotating commands
         if(str[commaIdx[3]+1] == '1')
         {
-            collect_rotating.forward();
+            collect_rotating.backwards();
         }
         else
         {
