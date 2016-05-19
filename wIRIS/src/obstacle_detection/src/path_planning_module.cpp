@@ -89,7 +89,7 @@ void* path_planning(void* unused)
         msg.data = ss.str();
         pub_control.publish(msg);
         
-        usleep(50);
+        usleep(50000);
         count_loops++;
         if((count_loops%20)==1)
         {
@@ -123,7 +123,7 @@ void wait_for_dist(double epsilon, const char * comment="")
         dist = sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y));
 
         //Wait for 10 ms
-        usleep(10);
+        usleep(10000);
     }
 
     control_direction = 0;
