@@ -38,18 +38,23 @@ long int millis()
 
 //Global settings file
 chesspos pos_chesspos={0.,0.,0.,0};
-int lock=0;
+//volatile int lock=0;
 
 chesspos get_chessboard_navigation_pos()
 {
-    while(lock)cout<<"Process is locked trying to access chessboard navigation data"<<endl;
-    lock=1;
+    //while(lock)
+    //{
+        //cout<<"Process is locked trying to access chessboard navigation data"<<endl;
+        //while(lock)
+            //sleep(0.001);
+    //}
+    //lock=1;
     chesspos ret;
     ret.x=pos_chesspos.x;
     ret.y=pos_chesspos.y;
     ret.t=pos_chesspos.t;
     ret.millis=pos_chesspos.millis;
-    lock=0;
+    //lock=0;
     return ret;
 }
 
@@ -302,13 +307,13 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
 			 << "webcam angle th " << webcam_angle
 			 << " delta " << delta << " vehicle " << vehicle_angle*180. / M_PI << endl;
 
-                    while (lock);
-                    lock = 1;
+                    //while (lock);
+                    //lock = 1;
                     pos_chesspos.x = x;
                     pos_chesspos.y = y;
                     pos_chesspos.t = vehicle_angle;
                     pos_chesspos.millis = millis_timestamp;
-                    lock = 0;
+                    //lock = 0;
 
                     if (long_turn || abs(delta) > 1)
                     {
