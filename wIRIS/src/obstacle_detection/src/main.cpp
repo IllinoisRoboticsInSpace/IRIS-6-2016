@@ -43,8 +43,8 @@ volatile bool stop_flag = false;
     //left_track_pub.publish(t_left);
 //}
 
-void path_planning(void* unused);
-void FSM(void * unused);
+void* path_planning(void* unused);
+void* FSM(void * unused);
 
 int main(int argc, char **argv)
 {

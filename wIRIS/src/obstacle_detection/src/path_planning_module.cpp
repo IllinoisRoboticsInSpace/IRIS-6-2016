@@ -11,7 +11,6 @@
 #include <sstream>
 
 using namespace std;
-using namespace cv;
 
 #define pow2(x) (x)*(x)
 
@@ -22,7 +21,7 @@ const double ANGULAR_CONST = 1/0.2;
 volatile double goal_x;
 volatile double goal_y;
 
-enum{RETRACT=0;STAY=1;EXTEND=2;STOP=0;MOVE=1;BACKWARDS=-2};
+enum{RETRACT = 0, STAY = 1, EXTEND = 2, STOP = 0, MOVE = 1, BACKWARDS = -2};
 
 volatile int bin_movement = 1; // 0=RETRACT 1=STAY 2=EXTEND
 volatile int paddle_movement = 1; // 0=RETRACT 1=STAY 2=EXTEND
@@ -42,7 +41,7 @@ template<typename T> T diff2pi(T d)
 	return min(d,2*M_PI-d);}
 }
 
-void path_planning(void* unused)
+void* path_planning(void* unused)
 {
 	//Initialize ROS node and publisher
 	ros::NodeHandle n;
@@ -123,7 +122,7 @@ void wait_for_dist(double epsilon)
 }
 
 //Main Finite State Machine
-void FSM(void * unused)
+void* FSM(void * unused)
 {
 	//Sequentially move through the different states: move_to_mine -> mine -> move_to_deposit -> deposit
 	//Offset for varying the x-axis position of the goal states and iteration level
