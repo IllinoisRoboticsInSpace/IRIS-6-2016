@@ -9,7 +9,6 @@
 #include <ros/ros.h>
 
 #include "checkboard_navigation_module.h"
-#include "path_planning_module.h"
 #include "data_structure.hpp"
 #include <geometry_msgs/Pose2D.h>
 

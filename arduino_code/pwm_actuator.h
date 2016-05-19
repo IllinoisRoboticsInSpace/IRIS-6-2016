@@ -14,6 +14,7 @@ public:
     void extend(int speed=-1);
     void retract(int speed=-1);
     inline void forward(int speed=-1){extend(speed);}
+    inline void backwards(int speed=-1){retract(speed);}
     void stop();
 private:
     int PIN_SPEED;
