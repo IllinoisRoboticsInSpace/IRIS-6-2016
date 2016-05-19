@@ -6,13 +6,14 @@
 #include <math.h>
 
 #include "checkboard_navigation_module.h"
+#include "data_structure.hpp"
 #include <ros/ros.h>
 #include "std_msgs/String.h"
 #include <sstream>
 
 using namespace std;
 
-#define pow2(x) (x)*(x)
+//#define pow2(x) (x)*(x)
 
 const double LINEAR_CONST = 1/2.;
 const double ANGULAR_CONST = 1/0.2;
@@ -152,7 +153,7 @@ void* FSM(void * unused)
 		paddle_movement = RETRACT;
 		set_goal(x, y, 1);
 		sleep(10); //???
-		paddle_movement = STAY
+		paddle_movement = STAY;
 		wait_for_dist(epsilon);
 		paddle_movement = EXTEND;
 		sleep(10); //???
@@ -180,7 +181,7 @@ void* FSM(void * unused)
 
 		//Deposit
 		bin_movement = EXTEND;
-		sleep(15) //~15s
+		sleep(15); //~15s
 		bin_movement = STAY;
 		sleep(5); //???
 		bin_movement = RETRACT;
