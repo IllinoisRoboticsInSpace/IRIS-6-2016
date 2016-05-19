@@ -90,14 +90,14 @@ void* path_planning(void* unused)
         
         sleep(0.050);
         static int count_loops=0;
-        if(!(count_loops++%20))std::cout<<"\033[0;32m"<< "PATHPLAN: current "<<pos.x<<" "<<pos.y<<" "<<pos.t<<" target "<< goal_x << " " << goal_y << " action f "<< forward_cntl << " t " << turning_cntl <<"\033[0m";
+        if((count_loops++%20)==0)std::cout<<"\033[0;32m"<< "PATHPLAN: current "<<pos.x<<" "<<pos.y<<" "<<pos.t<<" target "<< goal_x << " " << goal_y << " action f "<< forward_cntl << " t " << turning_cntl <<"\033[0m\n";
     }
 }
 
 //Sets a goal to move to
 void set_goal(double x, double y, int dir, const char * comment="")
 {
-    std::cout<<"\033[0;35m"<< "PATHPLAN: set_goal "<<x<<" "<<y<<" "<<dir<<" "<< comment <<"\033[0m";
+    std::cout<<"\033[0;35m"<< "PATHPLAN: set_goal "<<x<<" "<<y<<" "<<dir<<" "<< comment <<"\033[0m\n";
     //Set the goal position to the x and y values
     goal_x = x;
     goal_y = y;
@@ -107,7 +107,7 @@ void set_goal(double x, double y, int dir, const char * comment="")
 //Waits until robot reaches destination within specified tolerance
 void wait_for_dist(double epsilon, const char * comment="")
 {
-    std::cout<<"\033[0;35m"<< "PATHPLAN: wait_for_dist "<< epsilon << " " << comment <<"\033[0m";
+    std::cout<<"\033[0;35m"<< "PATHPLAN: wait_for_dist "<< epsilon << " " << comment <<"\033[0m\n";
     //Wait in here until the robot position is at or within the allowed tolerance
     chesspos pos = get_chessboard_navigation_pos();
     double dist = sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y));
@@ -179,12 +179,12 @@ void* FSM(void * unused)
         wait_for_dist(epsilon, "Move up to bin");
 
         //Now just move straight back until we reack the collection bin
-        std::cout<<"\033[0;35m"<< "PATHPLAN: approaching into bin" <<"\033[0m";
+        std::cout<<"\033[0;35m"<< "PATHPLAN: approaching into bin" <<"\033[0m\n";
         control_direction = BACKWARDS;
         sleep(10); //???
         
         //Deposit
-        std::cout<<"\033[0;35m"<< "PATHPLAN: deposit " <<"\033[0m";
+        std::cout<<"\033[0;35m"<< "PATHPLAN: deposit " <<"\033[0m\n";
         bin_movement = EXTEND;
         sleep(15); //~15s
         bin_movement = STAY;
@@ -195,6 +195,6 @@ void* FSM(void * unused)
 
         //Increment the iteration
         iter = (iter + 1) % 3;
-        std::cout<<"\033[0;35m"<< "PATHPLAN: New iteration "<<iter  <<" of type "<< offset[iter] <<"\033[0m";
+        std::cout<<"\033[0;35m"<< "PATHPLAN: New iteration "<<iter  <<" of type "<< offset[iter] <<"\033[0m\n";
     }
 }
