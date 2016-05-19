@@ -146,8 +146,8 @@ add_executable(computer_display src/main.cpp src/checkboard_navigation_module.cp
 #rosbuild_add_compile_flags(computer_display -lusb -lfreenect -lserial -lGL -lGLU -lglut)
 #rosbuild_add_link_flags(computer_display -lusb -lfreenect -L/opt/ros/hydro/lib -lserial -lGL -lGLU -lglut)
 #target_link_libraries(computer_display -lusb -lfreenect -L/opt/ros/hydro/lib -lserial -lGL -lGLU -lglut -lpthread ${catkin_LIBRARIES} ${OpenCV_LIBS})
-rosbuild_add_link_flags(computer_display -lGL -lGLU -lglut)
-target_link_libraries(computer_display -lGL -lGLU -lglut -lpthread ${catkin_LIBRARIES} ${OpenCV_LIBS})
+rosbuild_add_link_flags(computer_display -lz -lGL -lGLU -lglut)
+target_link_libraries(computer_display -lz -lGL -lGLU -lglut -lpthread ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 
 
