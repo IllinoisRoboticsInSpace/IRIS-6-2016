@@ -15,8 +15,8 @@ using namespace std;
 
 //#define pow2(x) (x)*(x)
 
-const double LINEAR_CONST = 1/2.;
-const double ANGULAR_CONST = 1/0.2;
+const double LINEAR_CONST = 1000/2.;
+const double ANGULAR_CONST = 1000/0.2;
 
 //Global variables
 volatile double goal_x;
@@ -48,40 +48,56 @@ void* path_planning(void* unused)
     int count_loops=0;
     ros::NodeHandle n;
     ros::Publisher pub_control=n.advertise<std_msgs::String>("/IRIS/autonomous_command" "hh", 1);
+    chesspos poss = {0,0,0,0};
+    while(poss.millis==0) //wait for first location
+        poss = get_chessboard_navigation_pos();
     while(1)
     {
         double forward_cntl;
         double turning_cntl;
         //Get robot position
         chesspos pos = get_chessboard_navigation_pos();
-
-        //Message setup
-        if(control_direction==BACKWARDS)
+        double right;
+        double left;
+        
+        if(millis()-pos.millis<1000)
         {
-            forward_cntl=-1000;
-            turning_cntl = 0.;
+
+            //Message setup
+            if(control_direction==BACKWARDS)
+            {
+                forward_cntl=-1000;
+                turning_cntl = 0.;
+            }
+            else
+            {
+                forward_cntl = control_direction*sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y))*LINEAR_CONST;
+                if(control_direction>0)
+                    turning_cntl = diff2pi(fmod2pi(atan2(goal_y - pos.y, goal_x - pos.x)) - fmod2pi(pos.t))*ANGULAR_CONST;
+                else if(control_direction<0)long int millis()
+
+                    turning_cntl = diff2pi(fmod2pi(atan2(goal_y - pos.y, goal_x - pos.x)) - fmod2pi(pos.t+M_PI))*ANGULAR_CONST;
+                else
+                    turning_cntl = 0.;
+            }
+            
+            //normalize and get right and left values
+            double normalizer=absd(turning_cntl)+absd(forward_cntl);
+            if(normalizer>0.)
+            {
+                turning_cntl/=normalizer;
+                forward_cntl/=normalizer;
+            }
+            right=forward_cntl+turning_cntl;
+            left=forward_cntl-turning_cntl;
         }
         else
         {
-            forward_cntl = control_direction*sqrt(pow2(goal_x - pos.x) + pow2(goal_y - pos.y))*LINEAR_CONST;
-            if(control_direction>0)
-                turning_cntl = diff2pi(fmod2pi(atan2(goal_y - pos.y, goal_x - pos.x)) - fmod2pi(pos.t))*ANGULAR_CONST;
-            else if(control_direction<0)
-                turning_cntl = diff2pi(fmod2pi(atan2(goal_y - pos.y, goal_x - pos.x)) - fmod2pi(pos.t+M_PI))*ANGULAR_CONST;
-            else
-                turning_cntl = 0.;
+            if((count_loops%20)==1)
+                std::cout<<"\033[0;32m"<< "PATHPLAN: ********* position is too old ******** "<<"\033[0m\n";
+            right=0;
+            left=0;
         }
-        
-        //normalize and get right and left values
-        double normalizer=absd(turning_cntl)+absd(forward_cntl);
-        if(normalizer>0.)
-        {
-            turning_cntl/=normalizer;
-            forward_cntl/=normalizer;
-        }
-        double right=forward_cntl+turning_cntl;
-        double left=forward_cntl-turning_cntl;
-
         //publish messages
         std_msgs::String msg;
         std::stringstream ss;
