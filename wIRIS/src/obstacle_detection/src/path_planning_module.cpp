@@ -95,7 +95,7 @@ void* path_planning(void* unused)
 }
 
 //Sets a goal to move to
-void set_goal(double x, double y, int dir, static char * comment="")
+void set_goal(double x, double y, int dir, const char * comment="")
 {
     std::cout<<"\033[0;35m"<< "PATHPLAN: set_goal "<<x<<" "<<y<<" "<<dir<<" "<< comment <<"\033[0m";
     //Set the goal position to the x and y values
@@ -105,7 +105,7 @@ void set_goal(double x, double y, int dir, static char * comment="")
 }
 
 //Waits until robot reaches destination within specified tolerance
-void wait_for_dist(double epsilon, static char * comment="")
+void wait_for_dist(double epsilon, const char * comment="")
 {
     std::cout<<"\033[0;35m"<< "PATHPLAN: wait_for_dist "<< epsilon << " " << comment <<"\033[0m";
     //Wait in here until the robot position is at or within the allowed tolerance
