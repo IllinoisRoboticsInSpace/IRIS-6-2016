@@ -38,7 +38,7 @@ template<typename T> T pow2(T d){return d*d;}
 template<typename T> T diff2pi(T d)
 {
 	d=fmod2pi(d);
-	return min(d,2*M_PI-d);}
+	return min(d,2*M_PI-d);
 }
 
 void* path_planning(void* unused)

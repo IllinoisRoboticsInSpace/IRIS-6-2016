@@ -390,7 +390,7 @@ void* thread_kinect(void* arg)
     //freenect_set_led(f_dev, static_cast<LED_COLOR>(3));//set kinect LED color, LED_RED, libfreenect.h
 
     /**SETUP VIDEO**/
-    freenect_set_video_callback(f_dev, video_cb);
+    //freenect_set_video_callback(f_dev, video_cb);
     freenect_set_video_format(f_dev, FREENECT_VIDEO_RGB);
     freenect_start_video(f_dev);//tell it to start reading rgb
 
