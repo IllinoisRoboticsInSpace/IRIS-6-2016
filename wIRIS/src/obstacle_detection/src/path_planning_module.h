@@ -79,14 +79,14 @@ void FSM()
 
 	double x;
 	double y;
-	double epsilon;
+	double epsilon = 100;
 
 	while(1)
 	{
 		//Move to mine
 		x = offset[iter];
-		y = 434;
-		epsilon = 0.2*y;
+		y = 500;
+		//epsilon = 0.2*y;
 		set_goal(x, y, 1);
 		wait_for_dist(epsilon);
 
@@ -94,16 +94,16 @@ void FSM()
 		//Order: start Maxon -> lower paddle -> set_goal() -> wait_for_dist() -> raise paddle -> stop Maxon
 		x = offset[iter];
 		y += 50;
-		epsilon = 0.2*y;
+		//epsilon = 0.2*y;
 		
 		paddle_onoff = MOVE;
 		paddle_movement = RETRACT;
 		set_goal(x, y, 1);
-		sleep(???);
+		sleep(10); //???
 		paddle_movement = STAY
 		wait_for_dist(epsilon);
 		paddle_movement = EXTEND;
-		sleep(???);
+		sleep(10); //???
 		paddle_onoff = STOP;
 		paddle_movement = STAY;
 
@@ -111,28 +111,28 @@ void FSM()
 		//Align to center of arena
 		x = 0;
 		y = 297;
-		epsilon = 0.2*y;
+		//epsilon = 0.2*y;
 		set_goal(x, y, -1);
 		wait_for_dist(epsilon);
 
 		//Move up to bin
 		x = 0;
 		y = -50;
-		epsilon = 100;
+		//epsilon = 100;
 		set_goal(x, y, -1);
 		wait_for_dist(epsilon);
 
 		//Now just move straight back until we reack the collection bin
 		control_direction = BACKWARDS;
-		sleep(???);
+		sleep(10); //???
 
 		//Deposit
 		bin_movement = EXTEND;
-		sleep(???) //~5s
+		sleep(15) //~15s
 		bin_movement = STAY;
-		sleep(???);
+		sleep(5); //???
 		bin_movement = RETRACT;
-		sleep(???); //~5s
+		sleep(10); //~10-15s
 		bin_movement = STAY;
 
 		//Increment the iteration
