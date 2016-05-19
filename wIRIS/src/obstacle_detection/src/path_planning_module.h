@@ -88,13 +88,16 @@ void path_planning(void* a)
 	}
 }
 
-void set_goal(double x, double y)
+//Sets a goal to move to
+void set_goal(double x, double y, int dir)
 {
 	//Set the goal position to the x and y values
 	goal_x = x;
 	goal_y = y;
+	control_direction = dir;
 }
 
+//Waits until robot reaches destination within specified tolerance
 void wait_for_dist(double epsilon)
 {
 	//Wait in here until the robot position is at or within the allowed tolerance
@@ -110,8 +113,11 @@ void wait_for_dist(double epsilon)
 		//Wait for 10 ms
 		sleep(0.01);
 	}
+
+	control_direction = 0;
 }
 
+//Main Finite State Machine
 void FSM()
 {
 	//Sequentially move through the different states: move_to_mine -> mine -> move_to_deposit -> deposit
@@ -129,26 +135,53 @@ void FSM()
 		x = offset[iter];
 		y = 434;
 		epsilon = 0.2*y;
-		set_goal(x, y);
+		set_goal(x, y, 1);
 		wait_for_dist(epsilon);
 
 		//Mine
-		//mine(true)
+		//Order: start Maxon -> lower paddle -> set_goal() -> wait_for_dist() -> raise paddle -> stop Maxon
+		x = offset[iter];
 		y += 50;
 		epsilon = 0.2*y;
-		set_goal(x, y);
+		
+		paddle_onoff = MOVE;
+		paddle_movement = RETRACT;
+		set_goal(x, y, 1);
+		sleep(???);
+		paddle_movement = STAY
 		wait_for_dist(epsilon);
-		//mine(false)
+		paddle_movement = EXTEND;
+		sleep(???);
+		paddle_onoff = STOP;
+		paddle_movement = STAY;
 
 		//Move to deposit
+		//Align to center of arena
 		x = 0;
 		y = 297;
 		epsilon = 0.2*y;
-		set_goal(x, y);
+		set_goal(x, y, -1);
 		wait_for_dist(epsilon);
 
+		//Move up to bin
+		x = 0;
+		y = -50;
+		epsilon = 100;
+		set_goal(x, y, -1);
+		wait_for_dist(epsilon);
+
+		//Now just move straight back until we reack the collection bin
+		control_direction = BACKWARDS;
+		sleep(???);
+
 		//Deposit
-		//deposit(...)
+		bin_movement = EXTEND;
+		sleep(???) //~5s
+		bin_movement = STAY;
+		sleep(???);
+		bin_movement = RETRACT;
+		sleep(???); //~5s
+		bin_movement = STAY;
 
 		//Increment the iteration
 		iter = (iter + 1) % 3;
