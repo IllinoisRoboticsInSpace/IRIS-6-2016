@@ -244,7 +244,7 @@ void* init_chessboard_navigation(void * stop_flag_ptr )
                         a = -a;
                         b = -b;
                     }
-                    b=-b;
+                    b = -b;
                     //find circles center and radious
                     //for(vector<Point2f>::iterator it=pointBuf.begin();it!=pointBuf.end();it++)
                     //{
