@@ -91,7 +91,10 @@ void* path_planning(void* unused)
         
         sleep(0.050);
         count_loops++;
-        if((count_loops%50)==0)std::cout<<"\033[0;32m"<< "PATHPLAN: current "<<pos.x<<" "<<pos.y<<" "<<pos.t<<" target "<< goal_x << " " << goal_y << " action f "<< forward_cntl << " t " << turning_cntl <<"\033[0m\n";
+        if((count_loops%50)==1)
+        {
+            std::cout<<"\033[0;32m"<< "PATHPLAN: current "<<pos.x<<" "<<pos.y<<" "<<pos.t<<" target "<< goal_x << " " << goal_y << " action f "<< forward_cntl << " t " << turning_cntl <<"\033[0m\n";
+        }
     }
 }
 
