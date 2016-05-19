@@ -16,7 +16,7 @@ using namespace std;
 //#define pow2(x) (x)*(x)
 
 const double LINEAR_CONST = 1000/2.;
-const double ANGULAR_CONST = 1000/0.2;
+const double ANGULAR_CONST = 1000/0.05;
 
 //Global variables
 volatile double goal_x;
@@ -47,7 +47,7 @@ void* path_planning(void* unused)
     //Initialize ROS node and publisher
     int count_loops=0;
     ros::NodeHandle n;
-    ros::Publisher pub_control=n.advertise<std_msgs::String>("/IRIS/autonomous_command" "hh", 1);
+    ros::Publisher pub_control=n.advertise<std_msgs::String>("/IRIS/autonomous_command", 1);
     chesspos poss = {0,0,0,0};
     while(poss.millis==0) //wait for first location
         poss = get_chessboard_navigation_pos();
@@ -86,8 +86,8 @@ void* path_planning(void* unused)
                 turning_cntl/=normalizer/1000.;
                 forward_cntl/=normalizer/1000.;
             }
-            right=forward_cntl+turning_cntl;
-            left=forward_cntl-turning_cntl;
+            right=forward_cntl-turning_cntl;
+            left=forward_cntl+turning_cntl;
         }
         else
         {
